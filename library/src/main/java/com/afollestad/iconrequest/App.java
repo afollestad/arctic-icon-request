@@ -5,6 +5,9 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
+import android.widget.ImageView;
+
+import com.afollestad.iconrequest.glide.AppIconLoader;
 
 import java.io.Serializable;
 
@@ -35,6 +38,14 @@ public class App implements Serializable {
                 mIcon = ai.loadIcon(context.getPackageManager());
         }
         return mIcon;
+    }
+
+    public void loadIcon(ImageView into) {
+        if (IRUtils.inClassPath("com.bumptech.glide.load.model.ModelLoader")) {
+            AppIconLoader.display(into, this);
+        } else {
+            into.setImageDrawable(getIcon(into.getContext()));
+        }
     }
 
     public String getName() {

@@ -1,6 +1,7 @@
 package com.afollestad.iconrequest;
 
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.util.Locale;
@@ -12,6 +13,15 @@ class IRUtils {
 
     public static boolean isEmpty(@Nullable String str) {
         return str == null || str.trim().isEmpty();
+    }
+
+    public static boolean inClassPath(@NonNull String clsName) {
+        try {
+            Class.forName(clsName);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     public static String drawableName(String appName) {

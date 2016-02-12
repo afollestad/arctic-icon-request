@@ -1,6 +1,5 @@
 package com.afollestad.iconrequestsample;
 
-import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -45,9 +44,8 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
     public void onBindViewHolder(MainVH holder, int position) {
         //noinspection ConstantConditions
         final App app = getApps().get(position);
-        final Context c = holder.itemView.getContext();
         holder.title.setText(app.getName());
-        holder.icon.setImageDrawable(app.getIcon(c));
+        app.loadIcon(holder.icon);
 
         final IconRequest ir = IconRequest.get();
         holder.itemView.setActivated(ir != null && ir.isAppSelected(app));
@@ -71,6 +69,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
         public void onClick(View view) {
             final IconRequest ir = IconRequest.get();
             if (ir != null) {
+                //noinspection ConstantConditions
                 final App app = ir.getApps().get(getAdapterPosition());
                 ir.toggleAppSelected(app);
                 adapter.notifyItemChanged(getAdapterPosition());
