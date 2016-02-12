@@ -37,8 +37,11 @@ class ComponentInfoUtil {
             if (splitCode[1].startsWith("."))
                 launchStr = splitCode[0] + "/" + splitCode[0] + splitCode[1];
 
-            if (filter.contains(launchStr))
+            if (filter.contains(launchStr)) {
+                IRLog.log("IconRequestApps", "Filtered %s", launchStr);
                 continue;
+            }
+            IRLog.log("IconRequestApps", "Loaded %s", launchStr);
             apps.add(new App(launchStr, ai.packageName));
 
             loaded++;

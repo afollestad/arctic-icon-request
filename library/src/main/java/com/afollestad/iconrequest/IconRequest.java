@@ -153,6 +153,7 @@ public class IconRequest {
         InputStream is;
         try {
             final AssetManager am = mBuilder.mContext.getAssets();
+            IRLog.log("IconRequestFilter", "Opening %s", mBuilder.mFilterName);
             is = am.open(mBuilder.mFilterName);
         } catch (Throwable e) {
             e.printStackTrace();
@@ -171,7 +172,9 @@ public class IconRequest {
                 if (start == -1) continue;
                 start += startStr.length();
                 int end = line.indexOf(endStr);
-                defined.add(line.substring(start, end));
+                final String ci = line.substring(start, end);
+                IRLog.log("IconRequestFilter", "Found: %s", ci);
+                defined.add(ci);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -330,6 +333,7 @@ public class IconRequest {
                 mBuilder.mSaveDir.mkdirs();
 
                 // Save app icons
+                IRLog.log("IconRequestSend", "Saving icons...");
                 for (App app : apps) {
                     final Drawable drawable = app.getIcon(mBuilder.mContext);
                     if (!(drawable instanceof BitmapDrawable)) continue;
@@ -356,6 +360,7 @@ public class IconRequest {
                 }
 
                 // Create appfilter.xml
+                IRLog.log("IconRequestSend", "Create appfilter...");
                 final StringBuilder sb = new StringBuilder("<resources>\n" +
                         "    <iconback img1=\"iconback\" />\n" +
                         "    <iconmask img1=\"iconmask\" />\n" +
@@ -392,6 +397,7 @@ public class IconRequest {
                 }
 
                 // Zip everything into an archive
+                IRLog.log("IconRequestSend", "Creating ZIP...");
                 final SimpleDateFormat df = new SimpleDateFormat("yyyy.MM.dd", Locale.getDefault());
                 final File zipFile = new File(mBuilder.mSaveDir,
                         String.format("IconRequest-%s.zip", df.format(new Date())));
@@ -412,6 +418,7 @@ public class IconRequest {
                 }
 
                 // Cleanup files
+                IRLog.log("IconRequestSend", "Cleaning up files...");
                 final File[] files = mBuilder.mSaveDir.listFiles();
                 for (File fi : files) {
                     if (!fi.isDirectory() && (fi.getName().endsWith(".png") || fi.getName().endsWith(".xml")))
@@ -419,6 +426,7 @@ public class IconRequest {
                 }
 
                 // Send email intent
+                IRLog.log("IconRequestSend", "Launching intent...");
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
