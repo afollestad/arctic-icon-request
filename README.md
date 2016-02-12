@@ -29,9 +29,7 @@ Add this to your module's `build.gradle` file (make sure the version matches the
 ```gradle
 dependencies {
 	...
-	compile('com.github.afollestad:icon-request:x.y.z@aar') {
-		transitive = true
-	}
+	compile 'com.github.afollestad:icon-request:x.y.z'
 }
 ```
 
