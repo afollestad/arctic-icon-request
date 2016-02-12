@@ -357,7 +357,7 @@ public class IconRequest {
                         "    <scale factor=\"1.0\" />");
                 for (App app : mApps) {
                     final String name = app.getName(mBuilder.mContext).toString();
-                    sb.append("\n\n<!-- ");
+                    sb.append("\n\n    <!-- ");
                     sb.append(name);
                     sb.append(" -->\n");
                     sb.append(String.format("    <item\n" +
@@ -418,7 +418,7 @@ public class IconRequest {
                     public void run() {
                         final Uri zipUri = Uri.fromFile(zipFile);
                         final Intent emailIntent = new Intent(Intent.ACTION_SEND)
-                                .putExtra(Intent.EXTRA_EMAIL, mBuilder.mEmail)
+                                .putExtra(Intent.EXTRA_EMAIL, new String[]{mBuilder.mEmail})
                                 .putExtra(Intent.EXTRA_SUBJECT, mBuilder.mSubject)
                                 .putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getBody()))
                                 .putExtra(Intent.EXTRA_STREAM, zipUri)
