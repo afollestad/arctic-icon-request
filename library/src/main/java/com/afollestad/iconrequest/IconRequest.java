@@ -145,7 +145,7 @@ public class IconRequest {
         return mRequest;
     }
 
-    public HashSet<String> loadFilterApps() {
+    private HashSet<String> loadFilterApps() {
         final HashSet<String> defined = new HashSet<>();
         if (IRUtils.isEmpty(mBuilder.mFilterName))
             return defined;
@@ -294,10 +294,16 @@ public class IconRequest {
             mBuilder.mSelectionCallback.onAppSelectionChanged(0);
     }
 
+    public boolean isAppsLoaded() {
+        return getApps() != null && getApps().size() > 0;
+    }
+
+    @Nullable
     public ArrayList<App> getApps() {
         return mApps;
     }
 
+    @NonNull
     public ArrayList<App> getSelectedApps() {
         if (mSelectedApps == null)
             mSelectedApps = new ArrayList<>();
