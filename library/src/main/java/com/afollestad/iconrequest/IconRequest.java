@@ -272,7 +272,7 @@ public class IconRequest {
         return mSelectedApps.contains(app);
     }
 
-    public void selectAllApps() {
+    public IconRequest selectAllApps() {
         if (mSelectedApps.size() == 0) {
             mSelectedApps.addAll(mApps);
             if (mBuilder.mSelectionCallback != null)
@@ -288,6 +288,7 @@ public class IconRequest {
             if (changed && mBuilder.mSelectionCallback != null)
                 mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
         }
+        return this;
     }
 
     public void unselectAllApps() {
@@ -316,6 +317,8 @@ public class IconRequest {
     public void send() {
         if (IRUtils.isEmpty(mBuilder.mEmail))
             throw new IllegalStateException("The email cannot be empty.");
+        else if (mSelectedApps.size() == 0)
+            throw new IllegalStateException("You must select apps before sending a request.");
         else if (IRUtils.isEmpty(mBuilder.mSubject))
             mBuilder.mSubject = "Icon Request";
 
@@ -366,7 +369,7 @@ public class IconRequest {
                         "    <iconmask img1=\"iconmask\" />\n" +
                         "    <iconupon img1=\"iconupon\" />\n" +
                         "    <scale factor=\"1.0\" />");
-                for (App app : mApps) {
+                for (App app : apps) {
                     final String name = app.getName(mBuilder.mContext).toString();
                     sb.append("\n\n    <!-- ");
                     sb.append(name);
