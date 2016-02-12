@@ -3,6 +3,8 @@
 Icon Request is a sleek library designed to help developers create icon requests from icon pack 
 dashboards.
 
+---
+
 # Gradle Dependency
 
 [![Release](https://jitpack.io/v/afollestad/icon-request.svg)](https://jitpack.io/#afollestad/icon-request)
