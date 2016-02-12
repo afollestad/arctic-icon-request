@@ -1,0 +1,15 @@
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+
+    <item
+        android:id="@android:id/mask"
+        android:drawable="@android:color/white" />
+    <item>
+        <selector>
+            <item
+                android:drawable="@drawable/selector_activatable_card_state_activated"
+                android:state_activated="true" />
+        </selector>
+    </item>
+
+</ripple>
