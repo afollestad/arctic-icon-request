@@ -58,6 +58,8 @@ public class IconRequest {
         protected String mHeader = "These apps aren't themed on my device, theme them please!";
         protected String mFooter = null;
         protected boolean mIncludeDeviceInfo = true;
+        protected boolean mGenerateAppFilterXml = true;
+        protected boolean mGenerateAppFilterJson;
         protected transient AppsLoadCallback mLoadCallback;
         protected transient RequestSendCallback mSendCallback;
         protected transient AppsSelectionListener mSelectionCallback;
@@ -129,6 +131,16 @@ public class IconRequest {
 
         public Builder selectionCallback(AppsSelectionListener cb) {
             mSelectionCallback = cb;
+            return this;
+        }
+
+        public Builder generateAppFilterXml(boolean generate) {
+            mGenerateAppFilterXml = generate;
+            return this;
+        }
+
+        public Builder generateAppFilterJson(boolean generate) {
+            mGenerateAppFilterJson = generate;
             return this;
         }
 
@@ -219,10 +231,10 @@ public class IconRequest {
             sb.append("<br/><br/>");
         }
 
-        for (int i = 0; i < mApps.size(); i++) {
+        for (int i = 0; i < mSelectedApps.size(); i++) {
             if (i > 0) sb.append("<br/><br/>");
-            final App app = mApps.get(i);
-            sb.append(String.format("Name: <b>%s</b><br/>", app.getName(mBuilder.mContext)));
+            final App app = mSelectedApps.get(i);
+            sb.append(String.format("Name: <b>%s</b><br/>", app.getName()));
             sb.append(String.format("Code: <b>%s</b><br/>", app.getCode()));
             sb.append(String.format("Link: https://play.google.com/store/apps/details?id=%s<br/>", app.getPackage()));
         }
@@ -332,12 +344,11 @@ public class IconRequest {
             @Override
             public void run() {
                 final ArrayList<File> filesToZip = new ArrayList<>();
-                final ArrayList<App> apps = mSelectedApps != null ? mSelectedApps : mApps;
                 mBuilder.mSaveDir.mkdirs();
 
                 // Save app icons
                 IRLog.log("IconRequestSend", "Saving icons...");
-                for (App app : apps) {
+                for (App app : mSelectedApps) {
                     final Drawable drawable = app.getIcon(mBuilder.mContext);
                     if (!(drawable instanceof BitmapDrawable)) continue;
                     final BitmapDrawable bDrawable = (BitmapDrawable) drawable;
@@ -362,41 +373,84 @@ public class IconRequest {
                     }
                 }
 
-                // Create appfilter.xml
+                // Create appfilter
                 IRLog.log("IconRequestSend", "Create appfilter...");
-                final StringBuilder sb = new StringBuilder("<resources>\n" +
-                        "    <iconback img1=\"iconback\" />\n" +
-                        "    <iconmask img1=\"iconmask\" />\n" +
-                        "    <iconupon img1=\"iconupon\" />\n" +
-                        "    <scale factor=\"1.0\" />");
-                for (App app : apps) {
-                    final String name = app.getName(mBuilder.mContext).toString();
-                    sb.append("\n\n    <!-- ");
-                    sb.append(name);
-                    sb.append(" -->\n");
-                    sb.append(String.format("    <item\n" +
-                                    "        component=\"ComponentInfo{%s}\"\n" +
-                                    "        drawable=\"%s\" />",
-                            app.getCode(), IRUtils.drawableName(name)));
+                StringBuilder xmlSb = null;
+                StringBuilder jsonSb = null;
+                if (mBuilder.mGenerateAppFilterXml) {
+                    xmlSb = new StringBuilder("<resources>\n" +
+                            "    <iconback img1=\"iconback\" />\n" +
+                            "    <iconmask img1=\"iconmask\" />\n" +
+                            "    <iconupon img1=\"iconupon\" />\n" +
+                            "    <scale factor=\"1.0\" />");
                 }
-                sb.append("\n\n</resources>");
-
-                final File newAppFilter = new File(mBuilder.mSaveDir, "appfilter.xml");
-                filesToZip.add(newAppFilter);
-                try {
-                    FileUtil.writeAll(newAppFilter, sb.toString());
-                } catch (final Exception e) {
-                    e.printStackTrace();
-                    if (mBuilder.mSendCallback != null) {
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mBuilder.mSendCallback.onRequestError(new Exception(
-                                        "Failed to write your request appfilter.xml file: " + e.getMessage(), e));
-                            }
-                        });
+                if (mBuilder.mGenerateAppFilterJson) {
+                    jsonSb = new StringBuilder("{\n" +
+                            "    \"components\": [");
+                }
+                int index = 0;
+                for (App app : mSelectedApps) {
+                    final String name = app.getName();
+                    final String drawableName = IRUtils.drawableName(name);
+                    if (xmlSb != null) {
+                        xmlSb.append("\n\n    <!-- ");
+                        xmlSb.append(name);
+                        xmlSb.append(" -->\n");
+                        xmlSb.append(String.format("    <item\n" +
+                                        "        component=\"ComponentInfo{%s}\"\n" +
+                                        "        drawable=\"%s\" />",
+                                app.getCode(), drawableName));
                     }
-                    return;
+                    if (jsonSb != null) {
+                        if (index > 0) jsonSb.append(",");
+                        jsonSb.append("\n        {\n");
+                        jsonSb.append(String.format("            \"%s\": \"%s\",\n", "name", name));
+                        jsonSb.append(String.format("            \"%s\": \"%s\",\n", "package", app.getPackage()));
+                        jsonSb.append(String.format("            \"%s\": \"%s\",\n", "code", app.getCode()));
+                        jsonSb.append(String.format("            \"%s\": \"%s\"\n", "drawable", drawableName));
+                        jsonSb.append("        }");
+                    }
+                    index++;
+                }
+                if (xmlSb != null) {
+                    xmlSb.append("\n\n</resources>");
+                    final File newAppFilter = new File(mBuilder.mSaveDir, "appfilter.xml");
+                    filesToZip.add(newAppFilter);
+                    try {
+                        FileUtil.writeAll(newAppFilter, xmlSb.toString());
+                    } catch (final Exception e) {
+                        e.printStackTrace();
+                        if (mBuilder.mSendCallback != null) {
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mBuilder.mSendCallback.onRequestError(new Exception(
+                                            "Failed to write your request appfilter.xml file: " + e.getMessage(), e));
+                                }
+                            });
+                        }
+                        return;
+                    }
+                }
+                if (jsonSb != null) {
+                    jsonSb.append("\n    ]\n}");
+                    final File newAppFilter = new File(mBuilder.mSaveDir, "appfilter.json");
+                    filesToZip.add(newAppFilter);
+                    try {
+                        FileUtil.writeAll(newAppFilter, jsonSb.toString());
+                    } catch (final Exception e) {
+                        e.printStackTrace();
+                        if (mBuilder.mSendCallback != null) {
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mBuilder.mSendCallback.onRequestError(new Exception(
+                                            "Failed to write your request appfilter.json file: " + e.getMessage(), e));
+                                }
+                            });
+                        }
+                        return;
+                    }
                 }
 
                 // Zip everything into an archive

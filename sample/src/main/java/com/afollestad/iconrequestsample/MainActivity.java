@@ -85,6 +85,8 @@ public class MainActivity extends AssentActivity implements AppsLoadCallback, Re
                     .toEmail("fake-email@fake-website.com")
                     .saveDir(new File(Environment.getExternalStorageDirectory(), getString(R.string.app_name)))
                     .includeDeviceInfo(true) // defaults to true anyways
+                    .generateAppFilterXml(true) // defaults to true anyways
+                    .generateAppFilterJson(true)
                     .loadCallback(this)
                     .sendCallback(this)
                     .selectionCallback(this)

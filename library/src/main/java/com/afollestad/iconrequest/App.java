@@ -13,16 +13,17 @@ import java.io.Serializable;
  */
 public class App implements Serializable {
 
+    private String mName;
     private String mCode;
     private String mPkg;
 
     private transient Drawable mIcon;
-    private transient CharSequence mName;
 
     public App() {
     }
 
-    App(String code, String pkg) {
+    App(String name, String code, String pkg) {
+        mName = name;
         mCode = code;
         mPkg = pkg;
     }
@@ -36,13 +37,7 @@ public class App implements Serializable {
         return mIcon;
     }
 
-    public CharSequence getName(Context context) {
-        if (mName == null) {
-            final ApplicationInfo ai = getAppInfo(context);
-            if (ai != null)
-                mName = ai.loadLabel(context.getPackageManager());
-            else mName = "Unknown";
-        }
+    public String getName() {
         return mName;
     }
 

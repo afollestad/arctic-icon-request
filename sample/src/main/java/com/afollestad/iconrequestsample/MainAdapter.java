@@ -46,7 +46,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
         //noinspection ConstantConditions
         final App app = getApps().get(position);
         final Context c = holder.itemView.getContext();
-        holder.title.setText(app.getName(c));
+        holder.title.setText(app.getName());
         holder.icon.setImageDrawable(app.getIcon(c));
 
         final IconRequest ir = IconRequest.get();

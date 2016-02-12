@@ -41,8 +41,10 @@ class ComponentInfoUtil {
                 IRLog.log("IconRequestApps", "Filtered %s", launchStr);
                 continue;
             }
+
             IRLog.log("IconRequestApps", "Loaded %s", launchStr);
-            apps.add(new App(launchStr, ai.packageName));
+            final String name = ai.loadLabel(pm).toString();
+            apps.add(new App(name, launchStr, ai.packageName));
 
             loaded++;
             final int percent = (loaded / appInfos.size()) * 100;
