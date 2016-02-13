@@ -165,7 +165,7 @@ public class IconRequest {
         InputStream is;
         try {
             final AssetManager am = mBuilder.mContext.getAssets();
-            IRLog.log("IconRequestFilter", "Opening %s", mBuilder.mFilterName);
+            IRLog.log("IconRequestFilter", "Loading your appfilter, opening: %s", mBuilder.mFilterName);
             is = am.open(mBuilder.mFilterName);
         } catch (Throwable e) {
             e.printStackTrace();
@@ -188,6 +188,7 @@ public class IconRequest {
                 IRLog.log("IconRequestFilter", "Found: %s", ci);
                 defined.add(ci);
             }
+            IRLog.log("IconRequestFilter", "Found %d total app(s) in your appfilter.", defined.size());
         } catch (Exception e) {
             e.printStackTrace();
             if (mBuilder.mLoadCallback != null)
@@ -211,6 +212,7 @@ public class IconRequest {
             @Override
             public void run() {
                 final HashSet<String> filter = loadFilterApps();
+                IRLog.log("IconRequestApps", "Loading unthemed installed apps...");
                 mApps = ComponentInfoUtil.getInstalledApps(mBuilder.mContext,
                         filter, mBuilder.mLoadCallback, mHandler);
                 mHandler.post(new Runnable() {
@@ -339,6 +341,7 @@ public class IconRequest {
         if (mHandler == null)
             mHandler = new Handler();
 
+        IRLog.log("IconRequestSend", "Preparing your request to send...");
         new Thread(new Runnable() {
             @SuppressWarnings("ResultOfMethodCallIgnored")
             @Override
@@ -374,7 +377,7 @@ public class IconRequest {
                 }
 
                 // Create appfilter
-                IRLog.log("IconRequestSend", "Create appfilter...");
+                IRLog.log("IconRequestSend", "Creating appfilter...");
                 StringBuilder xmlSb = null;
                 StringBuilder jsonSb = null;
                 if (mBuilder.mGenerateAppFilterXml) {
@@ -483,7 +486,7 @@ public class IconRequest {
                 }
 
                 // Send email intent
-                IRLog.log("IconRequestSend", "Launching intent...");
+                IRLog.log("IconRequestSend", "Launching intent!");
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {

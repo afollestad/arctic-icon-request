@@ -24,6 +24,7 @@ class ComponentInfoUtil {
         final ArrayList<App> apps = new ArrayList<>();
 
         int loaded = 0;
+        int filtered = 0;
         for (ApplicationInfo ai : appInfos) {
             final Intent launchIntent = pm.getLaunchIntentForPackage(ai.packageName);
             if (launchIntent == null)
@@ -38,6 +39,7 @@ class ComponentInfoUtil {
                 launchStr = splitCode[0] + "/" + splitCode[0] + splitCode[1];
 
             if (filter.contains(launchStr)) {
+                filtered++;
                 IRLog.log("IconRequestApps", "Filtered %s", launchStr);
                 continue;
             }
@@ -58,6 +60,7 @@ class ComponentInfoUtil {
             }
         }
 
+        IRLog.log("IconRequestApps", "Loaded %d total app(s), filtered out %d app(s).", apps.size(), filtered);
         return apps;
     }
 
