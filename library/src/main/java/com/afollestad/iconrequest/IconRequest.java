@@ -493,7 +493,7 @@ public class IconRequest {
                                 .putExtra(Intent.EXTRA_SUBJECT, mBuilder.mSubject)
                                 .putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getBody()))
                                 .putExtra(Intent.EXTRA_STREAM, zipUri)
-                                .setDataAndType(zipUri, "application/zip");
+                                .setType("application/zip");
                         mBuilder.mContext.startActivity(Intent.createChooser(
                                 emailIntent, mBuilder.mContext.getString(R.string.send_using)));
                         if (mBuilder.mSendCallback != null)
