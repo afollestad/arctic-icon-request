@@ -167,32 +167,52 @@ public class IconRequest {
             final AssetManager am = mBuilder.mContext.getAssets();
             IRLog.log("IconRequestFilter", "Loading your appfilter, opening: %s", mBuilder.mFilterName);
             is = am.open(mBuilder.mFilterName);
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             e.printStackTrace();
-            if (mBuilder.mLoadCallback != null)
-                mBuilder.mLoadCallback.onAppsLoaded(null, new Exception("Failed to open your filter: " + e.getLocalizedMessage(), e));
-            return defined;
+            if (mBuilder.mLoadCallback != null) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mBuilder.mLoadCallback.onAppsLoaded(null, new Exception("Failed to open your filter: " + e.getLocalizedMessage(), e));
+                    }
+                });
+            }
+            return null;
         }
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        String line;
+        int start;
+        int end;
         try {
-            final String startStr = "component=\"ComponentInfo{";
-            final String endStr = "}\"";
-            String line;
+            final String startStr = "component=\"ComponentInfo";
+            final String endStr = "\"";
             while ((line = reader.readLine()) != null) {
-                int start = line.indexOf(startStr);
-                if (start == -1) continue;
+                start = line.indexOf(startStr);
+                if (start == -1)
+                    continue;
                 start += startStr.length();
-                int end = line.indexOf(endStr);
-                final String ci = line.substring(start, end);
+                end = line.indexOf(endStr, start);
+                String ci = line.substring(start, end);
+                if (ci.startsWith("{"))
+                    ci = ci.substring(1);
+                if (ci.endsWith("}"))
+                    ci = ci.substring(0, ci.length() - 1);
                 IRLog.log("IconRequestFilter", "Found: %s", ci);
                 defined.add(ci);
             }
             IRLog.log("IconRequestFilter", "Found %d total app(s) in your appfilter.", defined.size());
-        } catch (Exception e) {
+        } catch (final Throwable e) {
             e.printStackTrace();
-            if (mBuilder.mLoadCallback != null)
-                mBuilder.mLoadCallback.onAppsLoaded(null, new Exception("Failed to read your filter: " + e.getMessage(), e));
+            if (mBuilder.mLoadCallback != null) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mBuilder.mLoadCallback.onAppsLoaded(null, new Exception("Failed to read your filter: " + e.getMessage(), e));
+                    }
+                });
+            }
+            return null;
         } finally {
             FileUtil.closeQuietely(reader);
             FileUtil.closeQuietely(is);
@@ -212,6 +232,7 @@ public class IconRequest {
             @Override
             public void run() {
                 final HashSet<String> filter = loadFilterApps();
+                if (filter == null) return;
                 IRLog.log("IconRequestApps", "Loading unthemed installed apps...");
                 mApps = ComponentInfoUtil.getInstalledApps(mBuilder.mContext,
                         filter, mBuilder.mLoadCallback, mHandler);
