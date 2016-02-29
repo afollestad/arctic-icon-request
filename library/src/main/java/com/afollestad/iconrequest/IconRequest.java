@@ -568,13 +568,19 @@ public class IconRequest {
 
     public static void cleanup() {
         if (mRequest == null) return;
-        mRequest.mBuilder.mContext = null;
-        mRequest.mBuilder = null;
+        if (mRequest.mBuilder != null) {
+            mRequest.mBuilder.mContext = null;
+            mRequest.mBuilder = null;
+        }
         mRequest.mHandler = null;
-        mRequest.mApps.clear();
-        mRequest.mApps = null;
-        mRequest.mSelectedApps.clear();
-        mRequest.mSelectedApps = null;
+        if (mRequest.mApps != null) {
+            mRequest.mApps.clear();
+            mRequest.mApps = null;
+        }
+        if (mRequest.mSelectedApps != null) {
+            mRequest.mSelectedApps.clear();
+            mRequest.mSelectedApps = null;
+        }
         mRequest = null;
     }
 }
