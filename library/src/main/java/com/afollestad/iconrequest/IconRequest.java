@@ -13,6 +13,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 import android.text.Html;
 
 import java.io.BufferedReader;
@@ -349,20 +350,37 @@ public class IconRequest {
         return mSelectedApps;
     }
 
-    public void send() {
-        if (IRUtils.isEmpty(mBuilder.mEmail))
-            throw new IllegalStateException("The email cannot be empty.");
-        else if (mSelectedApps.size() == 0)
-            throw new IllegalStateException("You must select apps before sending a request.");
-        else if (IRUtils.isEmpty(mBuilder.mSubject))
-            mBuilder.mSubject = "Icon Request";
+    @WorkerThread
+    private void postError(@NonNull final String msg, @Nullable final Exception baseError) {
+        if (mBuilder.mSendCallback != null) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mBuilder.mSendCallback.onRequestError(new Exception(msg, baseError));
+                }
+            });
+        } else {
+            throw new IllegalStateException(msg, baseError);
+        }
+    }
 
+    public void send() {
+        IRLog.log("IconRequestSend", "Preparing your request to send...");
         if (mBuilder.mSendCallback != null)
             mBuilder.mSendCallback.onRequestPreparing();
         if (mHandler == null)
             mHandler = new Handler();
 
-        IRLog.log("IconRequestSend", "Preparing your request to send...");
+        if (mApps == null) {
+            postError("No apps were loaded from this device.", null);
+        } else if (IRUtils.isEmpty(mBuilder.mEmail)) {
+            postError("The recipient email for the request cannot be empty.", null);
+        } else if (mSelectedApps == null || mSelectedApps.size() == 0) {
+            postError("No apps have been selected for sending in the request.", null);
+        } else if (IRUtils.isEmpty(mBuilder.mSubject)) {
+            mBuilder.mSubject = "Icon Request";
+        }
+
         new Thread(new Runnable() {
             @SuppressWarnings("ResultOfMethodCallIgnored")
             @Override
@@ -384,15 +402,7 @@ public class IconRequest {
                         FileUtil.writeIcon(file, icon);
                     } catch (final Exception e) {
                         e.printStackTrace();
-                        if (mBuilder.mSendCallback != null) {
-                            mHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mBuilder.mSendCallback.onRequestError(
-                                            new Exception("Failed to save an icon: " + e.getMessage(), e));
-                                }
-                            });
-                        }
+                        postError("Failed to save an icon: " + e.getMessage(), e);
                         return;
                     }
                 }
@@ -444,15 +454,7 @@ public class IconRequest {
                         FileUtil.writeAll(newAppFilter, xmlSb.toString());
                     } catch (final Exception e) {
                         e.printStackTrace();
-                        if (mBuilder.mSendCallback != null) {
-                            mHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mBuilder.mSendCallback.onRequestError(new Exception(
-                                            "Failed to write your request appfilter.xml file: " + e.getMessage(), e));
-                                }
-                            });
-                        }
+                        postError("Failed to write your request appfilter.xml file: " + e.getMessage(), e);
                         return;
                     }
                 }
@@ -464,17 +466,14 @@ public class IconRequest {
                         FileUtil.writeAll(newAppFilter, jsonSb.toString());
                     } catch (final Exception e) {
                         e.printStackTrace();
-                        if (mBuilder.mSendCallback != null) {
-                            mHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mBuilder.mSendCallback.onRequestError(new Exception(
-                                            "Failed to write your request appfilter.json file: " + e.getMessage(), e));
-                                }
-                            });
-                        }
+                        postError("Failed to write your request appfilter.json file: " + e.getMessage(), e);
                         return;
                     }
+                }
+
+                if (filesToZip.size() == 0) {
+                    postError("There are no files to put into the ZIP archive.", null);
+                    return;
                 }
 
                 // Zip everything into an archive
@@ -486,15 +485,7 @@ public class IconRequest {
                     ZipUtil.zip(zipFile, filesToZip.toArray(new File[filesToZip.size()]));
                 } catch (final Exception e) {
                     e.printStackTrace();
-                    if (mBuilder.mSendCallback != null) {
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mBuilder.mSendCallback.onRequestError(new Exception(
-                                        "Failed to create the request ZIP file: " + e.getMessage(), e));
-                            }
-                        });
-                    }
+                    postError("Failed to create the request ZIP file: " + e.getMessage(), e);
                     return;
                 }
 
