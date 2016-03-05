@@ -3,6 +3,7 @@ package com.afollestad.iconrequest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -182,25 +183,57 @@ public class IconRequest {
         }
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        String line;
-        int start;
-        int end;
         try {
-            final String startStr = "component=\"ComponentInfo";
+            final String itemEndStr = "/>";
+            final String componentStartStr = "component=\"ComponentInfo";
+            final String drawableStartStr = "drawable=\"";
             final String endStr = "\"";
+
+            String component = null;
+            String drawable = null;
+
+            String line;
             while ((line = reader.readLine()) != null) {
-                start = line.indexOf(startStr);
-                if (start == -1)
-                    continue;
-                start += startStr.length();
-                end = line.indexOf(endStr, start);
-                String ci = line.substring(start, end);
-                if (ci.startsWith("{"))
-                    ci = ci.substring(1);
-                if (ci.endsWith("}"))
-                    ci = ci.substring(0, ci.length() - 1);
-                IRLog.log("IconRequestFilter", "Found: %s", ci);
-                defined.add(ci);
+                int start;
+                int end;
+
+                start = line.indexOf(componentStartStr);
+                if (start != -1) {
+                    start += componentStartStr.length();
+                    end = line.indexOf(endStr, start);
+                    String ci = line.substring(start, end);
+                    if (ci.startsWith("{"))
+                        ci = ci.substring(1);
+                    if (ci.endsWith("}"))
+                        ci = ci.substring(0, ci.length() - 1);
+                    component = ci;
+                }
+
+                start = line.indexOf(drawableStartStr);
+                if (start != -1) {
+                    start += drawableStartStr.length();
+                    end = line.indexOf(endStr, start);
+                    drawable = line.substring(start, end);
+                }
+
+                start = line.indexOf(itemEndStr);
+                if (start != -1 && (component != null || drawable != null)) {
+                    IRLog.log("IconRequestFilter", "Found: %s (%s)", component, drawable);
+                    if (drawable == null || drawable.trim().isEmpty()) {
+                        IRLog.log("IconRequestFilter", "WARNING: Drawable shouldn't be null.");
+                    } else if (mBuilder.mContext != null) {
+                        final Resources r = mBuilder.mContext.getResources();
+                        int identifier;
+                        try {
+                            identifier = r.getIdentifier(drawable, "drawable", mBuilder.mContext.getPackageName());
+                        } catch (Throwable t) {
+                            identifier = 0;
+                        }
+                        if (identifier == 0)
+                            IRLog.log("IconRequestFilter", "WARNING: Drawable name %s doesn't match up with a resource.");
+                    }
+                    defined.add(component);
+                }
             }
             IRLog.log("IconRequestFilter", "Found %d total app(s) in your appfilter.", defined.size());
         } catch (final Throwable e) {
