@@ -230,7 +230,7 @@ public class IconRequest {
                             identifier = 0;
                         }
                         if (identifier == 0)
-                            IRLog.log("IconRequestFilter", "WARNING: Drawable name %s doesn't match up with a resource.");
+                            IRLog.log("IconRequestFilter", "WARNING: Drawable name %s doesn't match up with a resource.", drawable);
                     }
                     defined.add(component);
                 }
