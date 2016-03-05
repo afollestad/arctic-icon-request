@@ -62,6 +62,7 @@ public class IconRequest {
         protected boolean mIncludeDeviceInfo = true;
         protected boolean mGenerateAppFilterXml = true;
         protected boolean mGenerateAppFilterJson;
+        protected boolean mErrorOnInvalidAppFilterDrawable = true;
         protected transient AppsLoadCallback mLoadCallback;
         protected transient RequestSendCallback mSendCallback;
         protected transient AppsSelectionListener mSelectionCallback;
@@ -146,6 +147,11 @@ public class IconRequest {
             return this;
         }
 
+        public Builder errorOnInvalidFilterDrawable(boolean error) {
+            mErrorOnInvalidAppFilterDrawable = error;
+            return this;
+        }
+
         public IconRequest build() {
             return new IconRequest(this);
         }
@@ -221,6 +227,16 @@ public class IconRequest {
                     IRLog.log("IconRequestFilter", "Found: %s (%s)", component, drawable);
                     if (drawable == null || drawable.trim().isEmpty()) {
                         IRLog.log("IconRequestFilter", "WARNING: Drawable shouldn't be null.");
+                        if (mBuilder.mErrorOnInvalidAppFilterDrawable && mBuilder.mLoadCallback != null) {
+                            final String fComp = component;
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mBuilder.mLoadCallback.onAppsLoaded(null,
+                                            new Exception(String.format("Drawable for %s was null or empty.", fComp)));
+                                }
+                            });
+                        }
                     } else if (mBuilder.mContext != null) {
                         final Resources r = mBuilder.mContext.getResources();
                         int identifier;
@@ -229,8 +245,20 @@ public class IconRequest {
                         } catch (Throwable t) {
                             identifier = 0;
                         }
-                        if (identifier == 0)
-                            IRLog.log("IconRequestFilter", "WARNING: Drawable name %s doesn't match up with a resource.", drawable);
+                        if (identifier == 0) {
+                            IRLog.log("IconRequestFilter", "WARNING: Drawable %s (for %s) doesn't match up with a resource.", drawable, component);
+                            if (mBuilder.mErrorOnInvalidAppFilterDrawable && mBuilder.mLoadCallback != null) {
+                                final String fComp = component;
+                                final String fDraw = drawable;
+                                mHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mBuilder.mLoadCallback.onAppsLoaded(null,
+                                                new Exception(String.format("Drawable %s (for %s) doesn't match up with a resource.", fDraw, fComp)));
+                                    }
+                                });
+                            }
+                        }
                     }
                     defined.add(component);
                 }
