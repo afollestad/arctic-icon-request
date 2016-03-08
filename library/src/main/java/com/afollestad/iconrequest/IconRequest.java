@@ -194,12 +194,24 @@ public class IconRequest {
             final String componentStartStr = "component=\"ComponentInfo";
             final String drawableStartStr = "drawable=\"";
             final String endStr = "\"";
+            final String commentStart = "<!--";
+            final String commentEnd = "-->";
 
             String component = null;
             String drawable = null;
 
             String line;
+            boolean inComment = false;
+
             while ((line = reader.readLine()) != null) {
+                final String trimmedLine = line.trim();
+                if (inComment && trimmedLine.endsWith(commentEnd)) {
+                    inComment = false;
+                } else if (!inComment && trimmedLine.startsWith(commentStart)) {
+                    inComment = true;
+                }
+
+                if (inComment) continue;
                 int start;
                 int end;
 
