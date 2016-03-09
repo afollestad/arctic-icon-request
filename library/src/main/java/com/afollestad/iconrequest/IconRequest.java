@@ -165,6 +165,8 @@ public class IconRequest {
         return mRequest;
     }
 
+    private StringBuilder mInvalidDrawables;
+
     private HashSet<String> loadFilterApps() {
         final HashSet<String> defined = new HashSet<>();
         if (IRUtils.isEmpty(mBuilder.mFilterName))
@@ -241,15 +243,11 @@ public class IconRequest {
                     IRLog.log("IconRequestFilter", "Found: %s (%s)", component, drawable);
                     if (drawable == null || drawable.trim().isEmpty()) {
                         IRLog.log("IconRequestFilter", "WARNING: Drawable shouldn't be null.");
-                        if (mBuilder.mErrorOnInvalidAppFilterDrawable && mBuilder.mLoadCallback != null) {
-                            final String fComp = component;
-                            mHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mBuilder.mLoadCallback.onAppsLoaded(null,
-                                            new Exception(String.format("Drawable for %s was null or empty.", fComp)));
-                                }
-                            });
+                        if (mBuilder.mErrorOnInvalidAppFilterDrawable) {
+                            if (mInvalidDrawables == null)
+                                mInvalidDrawables = new StringBuilder();
+                            if (mInvalidDrawables.length() > 0) mInvalidDrawables.append("\n");
+                            mInvalidDrawables.append(String.format("Drawable for %s was null or empty.\n", component));
                         }
                     } else if (mBuilder.mContext != null) {
                         final Resources r = mBuilder.mContext.getResources();
@@ -261,21 +259,29 @@ public class IconRequest {
                         }
                         if (identifier == 0) {
                             IRLog.log("IconRequestFilter", "WARNING: Drawable %s (for %s) doesn't match up with a resource.", drawable, component);
-                            if (mBuilder.mErrorOnInvalidAppFilterDrawable && mBuilder.mLoadCallback != null) {
-                                final String fComp = component;
-                                final String fDraw = drawable;
-                                mHandler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mBuilder.mLoadCallback.onAppsLoaded(null,
-                                                new Exception(String.format("Drawable %s (for %s) doesn't match up with a resource.", fDraw, fComp)));
-                                    }
-                                });
+                            if (mBuilder.mErrorOnInvalidAppFilterDrawable) {
+                                if (mInvalidDrawables == null)
+                                    mInvalidDrawables = new StringBuilder();
+                                if (mInvalidDrawables.length() > 0) mInvalidDrawables.append("\n");
+                                mInvalidDrawables.append(String.format("Drawable %s (for %s) doesn't match up with a resource.\n", drawable, component));
                             }
                         }
                     }
                     defined.add(component);
                 }
+            }
+
+            if (mInvalidDrawables != null && mInvalidDrawables.length() > 0 &&
+                    mBuilder.mErrorOnInvalidAppFilterDrawable && mBuilder.mLoadCallback != null) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mBuilder.mLoadCallback.onAppsLoaded(null, new Exception(mInvalidDrawables.toString()));
+                        mInvalidDrawables.setLength(0);
+                        mInvalidDrawables.trimToSize();
+                        mInvalidDrawables = null;
+                    }
+                });
             }
             IRLog.log("IconRequestFilter", "Found %d total app(s) in your appfilter.", defined.size());
         } catch (final Throwable e) {
