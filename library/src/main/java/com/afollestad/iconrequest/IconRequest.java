@@ -18,7 +18,6 @@ import android.support.annotation.WorkerThread;
 import android.text.Html;
 
 import com.afollestad.bridge.Bridge;
-import com.afollestad.bridge.BridgeException;
 import com.afollestad.bridge.LineCallback;
 
 import java.io.BufferedReader;
@@ -26,6 +25,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -643,9 +643,9 @@ public final class IconRequest {
                     try {
                         Bridge.post("/insert")
                                 .throwIfNotSuccess()
-                                .body(remoteEntries.toString())
+                                .body("entries=" + URLEncoder.encode(remoteEntries.toString(), "UTF-8"))
                                 .request();
-                    } catch (BridgeException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                         postError("Failed to send icons to the backend: " + e.getMessage(), e);
                         return;
