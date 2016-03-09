@@ -210,6 +210,7 @@ public class IconRequest {
                 }
                 if (inComment && trimmedLine.endsWith(commentEnd)) {
                     inComment = false;
+                    continue;
                 }
 
                 if (inComment) continue;
