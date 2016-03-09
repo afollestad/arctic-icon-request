@@ -18,14 +18,15 @@ import android.support.annotation.WorkerThread;
 import android.text.Html;
 
 import com.afollestad.bridge.Bridge;
+import com.afollestad.bridge.Form;
 import com.afollestad.bridge.LineCallback;
+import com.afollestad.bridge.MultipartForm;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
-import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -641,9 +642,11 @@ public final class IconRequest {
                             .defaultHeader("Accept", "application/json")
                             .validators(new BackendValidator());
                     try {
+                        Form form = new Form();
+                        form.add("entries", remoteEntries);
                         Bridge.post("/insert")
                                 .throwIfNotSuccess()
-                                .body("entries=" + URLEncoder.encode(remoteEntries.toString(), "UTF-8"))
+                                .body(form)
                                 .request();
                     } catch (Exception e) {
                         e.printStackTrace();
