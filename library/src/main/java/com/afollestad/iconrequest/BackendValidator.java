@@ -12,13 +12,13 @@ import org.json.JSONObject;
  */
 class BackendValidator extends ResponseValidator {
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean validate(@NonNull Response response) throws Exception {
-        if (response.headerEquals("Content-Type", "application/json")) {
+        String body = response.asString();
+        if (body != null && body.startsWith("{")) {
             JSONObject json = response.asJsonObject();
-            if (json == null)
-                return false;
-            else if (!json.getString("status").equals("success"))
+            if (!json.getString("status").equals("success"))
                 throw new Exception(json.getString("error"));
         }
         return true;
