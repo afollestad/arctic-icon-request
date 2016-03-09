@@ -205,10 +205,11 @@ public class IconRequest {
 
             while ((line = reader.readLine()) != null) {
                 final String trimmedLine = line.trim();
+                if (!inComment && trimmedLine.startsWith(commentStart)) {
+                    inComment = true;
+                }
                 if (inComment && trimmedLine.endsWith(commentEnd)) {
                     inComment = false;
-                } else if (!inComment && trimmedLine.startsWith(commentStart)) {
-                    inComment = true;
                 }
 
                 if (inComment) continue;
