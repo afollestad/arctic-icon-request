@@ -17,6 +17,10 @@ import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.text.Html;
 
+import com.afollestad.bridge.Bridge;
+import com.afollestad.bridge.BridgeException;
+import com.afollestad.bridge.LineCallback;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
@@ -31,12 +35,13 @@ import java.util.Locale;
 /**
  * @author Aidan Follestad (afollestad)
  */
-public class IconRequest {
+public final class IconRequest {
 
     private Builder mBuilder;
     private ArrayList<App> mApps;
     private ArrayList<App> mSelectedApps;
     private transient Handler mHandler;
+    private transient HashSet<String> mRemoteFilterCache;
 
     private static IconRequest mRequest;
 
@@ -63,6 +68,8 @@ public class IconRequest {
         protected boolean mGenerateAppFilterXml = true;
         protected boolean mGenerateAppFilterJson;
         protected boolean mErrorOnInvalidAppFilterDrawable = true;
+        protected BackendConfig mBackendConfig = null;
+
         protected transient AppsLoadCallback mLoadCallback;
         protected transient RequestSendCallback mSendCallback;
         protected transient AppsSelectionListener mSelectionCallback;
@@ -70,7 +77,7 @@ public class IconRequest {
         public Builder() {
         }
 
-        public Builder(Context context) {
+        public Builder(@NonNull Context context) {
             mContext = context;
             mSaveDir = new File(Environment.getExternalStorageDirectory(), "IconRequest");
             FileUtil.wipe(mSaveDir);
@@ -122,17 +129,17 @@ public class IconRequest {
             return this;
         }
 
-        public Builder loadCallback(AppsLoadCallback cb) {
+        public Builder loadCallback(@Nullable AppsLoadCallback cb) {
             mLoadCallback = cb;
             return this;
         }
 
-        public Builder sendCallback(RequestSendCallback cb) {
+        public Builder sendCallback(@Nullable RequestSendCallback cb) {
             mSendCallback = cb;
             return this;
         }
 
-        public Builder selectionCallback(AppsSelectionListener cb) {
+        public Builder selectionCallback(@Nullable AppsSelectionListener cb) {
             mSelectionCallback = cb;
             return this;
         }
@@ -152,6 +159,11 @@ public class IconRequest {
             return this;
         }
 
+        public Builder remoteConfig(@Nullable BackendConfig config) {
+            mBackendConfig = config;
+            return this;
+        }
+
         public IconRequest build() {
             return new IconRequest(this);
         }
@@ -166,6 +178,36 @@ public class IconRequest {
     }
 
     private StringBuilder mInvalidDrawables;
+
+    public void invalidateRemoteCache() {
+        if (mRemoteFilterCache == null) return;
+        mRemoteFilterCache.clear();
+        mRemoteFilterCache = null;
+    }
+
+    private void loadBackendFilter(@NonNull final HashSet<String> defined) throws Exception {
+        if (mRemoteFilterCache != null) {
+            defined.addAll(mRemoteFilterCache);
+            IRLog.log("IconRequestFilter", "Found %d total app(s) in the remote appfilter cache.", mRemoteFilterCache.size());
+            return;
+        }
+        if (mBuilder.mBackendConfig == null) return;
+        final BackendConfig config = mBuilder.mBackendConfig;
+        Bridge.config()
+                .host(config.url)
+                .defaultHeader("AppId", config.appId)
+                .defaultHeader("Accept", "application/json")
+                .validators(new BackendValidator());
+        Bridge.get("/retrieve")
+                .throwIfNotSuccess()
+                .asLineStream(new LineCallback() {
+                    @Override
+                    public void onLine(@NonNull String s) {
+                        defined.add(s);
+                    }
+                });
+        IRLog.log("IconRequestFilter", "Found %d total app(s) in your remote appfilter.", defined.size());
+    }
 
     private HashSet<String> loadFilterApps() {
         final HashSet<String> defined = new HashSet<>();
@@ -284,6 +326,7 @@ public class IconRequest {
                 });
             }
             IRLog.log("IconRequestFilter", "Found %d total app(s) in your appfilter.", defined.size());
+            loadBackendFilter(defined);
         } catch (final Throwable e) {
             e.printStackTrace();
             if (mBuilder.mLoadCallback != null) {
@@ -360,7 +403,7 @@ public class IconRequest {
         return sb.toString();
     }
 
-    public boolean selectApp(App app) {
+    public boolean selectApp(@NonNull App app) {
         if (!mSelectedApps.contains(app)) {
             mSelectedApps.add(app);
             if (mBuilder.mSelectionCallback != null)
@@ -370,14 +413,14 @@ public class IconRequest {
         return false;
     }
 
-    public boolean unselectApp(App app) {
+    public boolean unselectApp(@NonNull App app) {
         final boolean result = mSelectedApps.remove(app);
         if (result && mBuilder.mSelectionCallback != null)
             mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
         return result;
     }
 
-    public boolean toggleAppSelected(App app) {
+    public boolean toggleAppSelected(@NonNull App app) {
         final boolean result;
         if (isAppSelected(app))
             result = unselectApp(app);
@@ -385,7 +428,7 @@ public class IconRequest {
         return result;
     }
 
-    public boolean isAppSelected(App app) {
+    public boolean isAppSelected(@NonNull App app) {
         return mSelectedApps.contains(app);
     }
 
@@ -469,6 +512,10 @@ public class IconRequest {
                 final ArrayList<File> filesToZip = new ArrayList<>();
                 mBuilder.mSaveDir.mkdirs();
 
+                StringBuilder remoteEntries = null;
+                if (mBuilder.mBackendConfig != null)
+                    remoteEntries = new StringBuilder();
+
                 // Save app icons
                 IRLog.log("IconRequestSend", "Saving icons...");
                 for (App app : mSelectedApps) {
@@ -505,6 +552,13 @@ public class IconRequest {
                 }
                 int index = 0;
                 for (App app : mSelectedApps) {
+                    // Build entries string that's sent to the backend if necessary
+                    if (remoteEntries != null) {
+                        if (remoteEntries.length() > 0)
+                            remoteEntries.append(",");
+                        remoteEntries.append(app.getCode());
+                    }
+
                     final String name = app.getName();
                     final String drawableName = IRUtils.drawableName(name);
                     if (xmlSb != null) {
@@ -576,6 +630,26 @@ public class IconRequest {
                 for (File fi : files) {
                     if (!fi.isDirectory() && (fi.getName().endsWith(".png") || fi.getName().endsWith(".xml")))
                         fi.delete();
+                }
+
+                // Send entries to the remote backend if necessary
+                if (remoteEntries != null) {
+                    final BackendConfig config = mBuilder.mBackendConfig;
+                    Bridge.config()
+                            .host(config.url)
+                            .defaultHeader("AppId", config.appId)
+                            .defaultHeader("Accept", "application/json")
+                            .validators(new BackendValidator());
+                    try {
+                        Bridge.post("/insert")
+                                .throwIfNotSuccess()
+                                .body(remoteEntries.toString())
+                                .request();
+                    } catch (BridgeException e) {
+                        e.printStackTrace();
+                        postError("Failed to send icons to the backend: " + e.getMessage(), e);
+                        return;
+                    }
                 }
 
                 // Send email intent
