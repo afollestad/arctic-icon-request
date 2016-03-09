@@ -21,7 +21,7 @@ class BackendValidator extends ResponseValidator {
             else if (!json.getString("status").equals("success"))
                 throw new Exception(json.getString("error"));
         }
-        return false;
+        return true;
     }
 
     @NonNull
