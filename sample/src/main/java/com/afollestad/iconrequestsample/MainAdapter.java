@@ -44,8 +44,17 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
     public void onBindViewHolder(MainVH holder, int position) {
         //noinspection ConstantConditions
         final App app = getApps().get(position);
-        holder.title.setText(app.getName());
         app.loadIcon(holder.icon);
+
+        if (app.isRequested()) {
+            holder.title.setText(R.string.already_requested);
+            holder.title.setAlpha(.25f);
+            holder.icon.setAlpha(.25f);
+        } else {
+            holder.title.setText(app.getName());
+            holder.title.setAlpha(1f);
+            holder.icon.setAlpha(1f);
+        }
 
         final IconRequest ir = IconRequest.get();
         holder.itemView.setActivated(ir != null && ir.isAppSelected(app));

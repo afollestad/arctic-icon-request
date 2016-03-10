@@ -16,7 +16,8 @@ import java.util.List;
  */
 class ComponentInfoUtil {
 
-    public static ArrayList<App> getInstalledApps(final Context context, final HashSet<String> filter,
+    public static ArrayList<App> getInstalledApps(final Context context,
+                                                  final HashSet<String> filter, final HashSet<String> remoteFilter,
                                                   final AppsLoadCallback cb, final Handler handler) {
         final PackageManager pm = context.getPackageManager();
         final List<ApplicationInfo> appInfos = pm.getInstalledApplications(PackageManager.GET_META_DATA);
@@ -46,7 +47,8 @@ class ComponentInfoUtil {
 
 //            IRLog.log("IconRequestApps", "Loaded %s", launchStr);
             final String name = ai.loadLabel(pm).toString();
-            apps.add(new App(name, launchStr, ai.packageName));
+            apps.add(new App(name, launchStr, ai.packageName,
+                    remoteFilter.contains(launchStr)));
 
             loaded++;
             final int percent = (loaded / appInfos.size()) * 100;

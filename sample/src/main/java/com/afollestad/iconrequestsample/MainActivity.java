@@ -132,13 +132,15 @@ public class MainActivity extends AssentActivity implements AppsLoadCallback, Re
 
     @Override
     public void onRequestError(Exception e) {
-        mDialog.dismiss();
-        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        if (mDialog != null)
+            mDialog.dismiss();
+        mProgress.setText(e.getMessage());
     }
 
     @Override
     public void onRequestSent() {
-        mDialog.dismiss();
+        if (mDialog != null)
+            mDialog.dismiss();
         Toast.makeText(this, R.string.request_sent, Toast.LENGTH_SHORT).show();
         IconRequest.get().unselectAllApps();
         mAdapter.notifyDataSetChanged();

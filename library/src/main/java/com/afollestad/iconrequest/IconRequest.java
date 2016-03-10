@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -20,7 +21,6 @@ import android.text.Html;
 import com.afollestad.bridge.Bridge;
 import com.afollestad.bridge.Form;
 import com.afollestad.bridge.LineCallback;
-import com.afollestad.bridge.MultipartForm;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -186,13 +186,15 @@ public final class IconRequest {
         mRemoteFilterCache = null;
     }
 
-    private void loadBackendFilter(@NonNull final HashSet<String> defined) throws Exception {
+    @Nullable
+    @CheckResult
+    private HashSet<String> loadBackendFilter() throws Exception {
         if (mRemoteFilterCache != null) {
-            defined.addAll(mRemoteFilterCache);
             IRLog.log("IconRequestFilter", "Found %d total app(s) in the remote appfilter cache.", mRemoteFilterCache.size());
-            return;
+            return mRemoteFilterCache;
         }
-        if (mBuilder.mBackendConfig == null) return;
+        if (mBuilder.mBackendConfig == null) return null;
+        mRemoteFilterCache = new HashSet<>();
         final BackendConfig config = mBuilder.mBackendConfig;
         Bridge.config()
                 .host(config.url)
@@ -204,12 +206,15 @@ public final class IconRequest {
                 .asLineStream(new LineCallback() {
                     @Override
                     public void onLine(@NonNull String s) {
-                        defined.add(s);
+                        mRemoteFilterCache.add(s);
                     }
                 });
-        IRLog.log("IconRequestFilter", "Found %d total app(s) in your remote appfilter.", defined.size());
+        IRLog.log("IconRequestFilter", "Found %d total app(s) in your remote appfilter.", mRemoteFilterCache.size());
+        return mRemoteFilterCache;
     }
 
+    @CheckResult
+    @Nullable
     private HashSet<String> loadFilterApps() {
         final HashSet<String> defined = new HashSet<>();
         if (IRUtils.isEmpty(mBuilder.mFilterName))
@@ -327,7 +332,6 @@ public final class IconRequest {
                 });
             }
             IRLog.log("IconRequestFilter", "Found %d total app(s) in your appfilter.", defined.size());
-            loadBackendFilter(defined);
         } catch (final Throwable e) {
             e.printStackTrace();
             if (mBuilder.mLoadCallback != null) {
@@ -358,10 +362,17 @@ public final class IconRequest {
             @Override
             public void run() {
                 final HashSet<String> filter = loadFilterApps();
+                HashSet<String> remoteFilter = null;
+                try {
+                    remoteFilter = loadBackendFilter();
+                } catch (Exception e) {
+                    postError("Failed to load the remote filter: " + e.getMessage(), e);
+                    return;
+                }
                 if (filter == null) return;
                 IRLog.log("IconRequestApps", "Loading unthemed installed apps...");
                 mApps = ComponentInfoUtil.getInstalledApps(mBuilder.mContext,
-                        filter, mBuilder.mLoadCallback, mHandler);
+                        filter, remoteFilter, mBuilder.mLoadCallback, mHandler);
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -405,6 +416,8 @@ public final class IconRequest {
     }
 
     public boolean selectApp(@NonNull App app) {
+        if (app.isRequested())
+            return false;
         if (!mSelectedApps.contains(app)) {
             mSelectedApps.add(app);
             if (mBuilder.mSelectionCallback != null)
@@ -434,21 +447,16 @@ public final class IconRequest {
     }
 
     public IconRequest selectAllApps() {
-        if (mSelectedApps.size() == 0) {
-            mSelectedApps.addAll(mApps);
-            if (mBuilder.mSelectionCallback != null)
-                mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
-        } else {
-            boolean changed = false;
-            for (App app : mApps) {
-                if (!mSelectedApps.contains(app)) {
-                    changed = true;
-                    mSelectedApps.add(app);
-                }
+        boolean changed = false;
+        for (App app : mApps) {
+            if (app.isRequested()) continue;
+            if (!mSelectedApps.contains(app)) {
+                changed = true;
+                mSelectedApps.add(app);
             }
-            if (changed && mBuilder.mSelectionCallback != null)
-                mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
         }
+        if (changed && mBuilder.mSelectionCallback != null)
+            mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
         return this;
     }
 
@@ -654,6 +662,10 @@ public final class IconRequest {
                         return;
                     }
                 }
+
+                // Mark apps as requested
+                for (App app : mSelectedApps)
+                    app.setRequested(true);
 
                 // Send email intent
                 IRLog.log("IconRequestSend", "Launching intent!");

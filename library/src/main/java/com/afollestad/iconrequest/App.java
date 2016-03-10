@@ -19,16 +19,18 @@ public class App implements Serializable {
     private String mName;
     private String mCode;
     private String mPkg;
+    private boolean mRequested;
 
     private transient Drawable mIcon;
 
     public App() {
     }
 
-    App(String name, String code, String pkg) {
+    App(String name, String code, String pkg, boolean requested) {
         mName = name;
         mCode = code;
         mPkg = pkg;
+        mRequested = requested;
     }
 
     public Drawable getIcon(Context context) {
@@ -60,6 +62,14 @@ public class App implements Serializable {
         return mPkg;
     }
 
+    public boolean isRequested() {
+        return mRequested;
+    }
+
+    public void setRequested(boolean requested) {
+        this.mRequested = requested;
+    }
+
     @Nullable
     public ApplicationInfo getAppInfo(Context context) {
         try {
@@ -72,5 +82,10 @@ public class App implements Serializable {
     @Override
     public String toString() {
         return mCode;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof App && ((App) o).getCode().equals(getCode());
     }
 }
