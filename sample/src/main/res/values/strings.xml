@@ -8,4 +8,5 @@
     <string name="preparing_your_request">Preparing your request…</string>
     <string name="permission_denied">You must grant permission in order to generate a request!</string>
     <string name="already_requested">Already requested</string>
+    <string name="error">Error</string>
 </resources>

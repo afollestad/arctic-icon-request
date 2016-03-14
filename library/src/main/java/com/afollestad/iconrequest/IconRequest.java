@@ -19,8 +19,9 @@ import android.support.annotation.WorkerThread;
 import android.text.Html;
 
 import com.afollestad.bridge.Bridge;
-import com.afollestad.bridge.Form;
-import com.afollestad.bridge.LineCallback;
+import com.afollestad.bridge.MultipartForm;
+
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -186,33 +187,6 @@ public final class IconRequest {
         mRemoteFilterCache = null;
     }
 
-    @Nullable
-    @CheckResult
-    private HashSet<String> loadBackendFilter() throws Exception {
-        if (mRemoteFilterCache != null) {
-            IRLog.log("IconRequestFilter", "Found %d total app(s) in the remote appfilter cache.", mRemoteFilterCache.size());
-            return mRemoteFilterCache;
-        }
-        if (mBuilder.mBackendConfig == null) return null;
-        mRemoteFilterCache = new HashSet<>();
-        final BackendConfig config = mBuilder.mBackendConfig;
-        Bridge.config()
-                .host(config.url)
-                .defaultHeader("AppId", config.appId)
-                .defaultHeader("Accept", "application/json")
-                .validators(new BackendValidator());
-        Bridge.get("/retrieve")
-                .throwIfNotSuccess()
-                .asLineStream(new LineCallback() {
-                    @Override
-                    public void onLine(@NonNull String s) {
-                        mRemoteFilterCache.add(s);
-                    }
-                });
-        IRLog.log("IconRequestFilter", "Found %d total app(s) in your remote appfilter.", mRemoteFilterCache.size());
-        return mRemoteFilterCache;
-    }
-
     @CheckResult
     @Nullable
     private HashSet<String> loadFilterApps() {
@@ -362,17 +336,10 @@ public final class IconRequest {
             @Override
             public void run() {
                 final HashSet<String> filter = loadFilterApps();
-                HashSet<String> remoteFilter = null;
-                try {
-                    remoteFilter = loadBackendFilter();
-                } catch (Exception e) {
-                    postError("Failed to load the remote filter: " + e.getMessage(), e);
-                    return;
-                }
                 if (filter == null) return;
                 IRLog.log("IconRequestApps", "Loading unthemed installed apps...");
                 mApps = ComponentInfoUtil.getInstalledApps(mBuilder.mContext,
-                        filter, remoteFilter, mBuilder.mLoadCallback, mHandler);
+                        filter, mBuilder.mLoadCallback, mHandler);
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -521,10 +488,6 @@ public final class IconRequest {
                 final ArrayList<File> filesToZip = new ArrayList<>();
                 mBuilder.mSaveDir.mkdirs();
 
-                StringBuilder remoteEntries = null;
-                if (mBuilder.mBackendConfig != null)
-                    remoteEntries = new StringBuilder();
-
                 // Save app icons
                 IRLog.log("IconRequestSend", "Saving icons...");
                 for (App app : mSelectedApps) {
@@ -533,7 +496,7 @@ public final class IconRequest {
                     final BitmapDrawable bDrawable = (BitmapDrawable) drawable;
                     final Bitmap icon = bDrawable.getBitmap();
                     final File file = new File(mBuilder.mSaveDir,
-                            String.format("%s.png", app.getCode().replace("/", "_")));
+                            String.format("%s.png", app.getPackage()));
                     filesToZip.add(file);
                     try {
                         FileUtil.writeIcon(file, icon);
@@ -548,26 +511,19 @@ public final class IconRequest {
                 IRLog.log("IconRequestSend", "Creating appfilter...");
                 StringBuilder xmlSb = null;
                 StringBuilder jsonSb = null;
-                if (mBuilder.mGenerateAppFilterXml) {
+                if (mBuilder.mGenerateAppFilterXml && mBuilder.mBackendConfig == null) {
                     xmlSb = new StringBuilder("<resources>\n" +
                             "    <iconback img1=\"iconback\" />\n" +
                             "    <iconmask img1=\"iconmask\" />\n" +
                             "    <iconupon img1=\"iconupon\" />\n" +
                             "    <scale factor=\"1.0\" />");
                 }
-                if (mBuilder.mGenerateAppFilterJson) {
+                if (mBuilder.mGenerateAppFilterJson || mBuilder.mBackendConfig != null) {
                     jsonSb = new StringBuilder("{\n" +
                             "    \"components\": [");
                 }
                 int index = 0;
                 for (App app : mSelectedApps) {
-                    // Build entries string that's sent to the backend if necessary
-                    if (remoteEntries != null) {
-                        if (remoteEntries.length() > 0)
-                            remoteEntries.append(",");
-                        remoteEntries.append(app.getCode());
-                    }
-
                     final String name = app.getName();
                     final String drawableName = IRUtils.drawableName(name);
                     if (xmlSb != null) {
@@ -583,8 +539,8 @@ public final class IconRequest {
                         if (index > 0) jsonSb.append(",");
                         jsonSb.append("\n        {\n");
                         jsonSb.append(String.format("            \"%s\": \"%s\",\n", "name", name));
-                        jsonSb.append(String.format("            \"%s\": \"%s\",\n", "package", app.getPackage()));
-                        jsonSb.append(String.format("            \"%s\": \"%s\",\n", "code", app.getCode()));
+                        jsonSb.append(String.format("            \"%s\": \"%s\",\n", "pkg", app.getPackage()));
+                        jsonSb.append(String.format("            \"%s\": \"%s\",\n", "componentInfo", app.getCode()));
                         jsonSb.append(String.format("            \"%s\": \"%s\"\n", "drawable", drawableName));
                         jsonSb.append("        }");
                     }
@@ -604,14 +560,16 @@ public final class IconRequest {
                 }
                 if (jsonSb != null) {
                     jsonSb.append("\n    ]\n}");
-                    final File newAppFilter = new File(mBuilder.mSaveDir, "appfilter.json");
-                    filesToZip.add(newAppFilter);
-                    try {
-                        FileUtil.writeAll(newAppFilter, jsonSb.toString());
-                    } catch (final Exception e) {
-                        e.printStackTrace();
-                        postError("Failed to write your request appfilter.json file: " + e.getMessage(), e);
-                        return;
+                    if (mBuilder.mBackendConfig == null) {
+                        final File newAppFilter = new File(mBuilder.mSaveDir, "appfilter.json");
+                        filesToZip.add(newAppFilter);
+                        try {
+                            FileUtil.writeAll(newAppFilter, jsonSb.toString());
+                        } catch (final Exception e) {
+                            e.printStackTrace();
+                            postError("Failed to write your request appfilter.json file: " + e.getMessage(), e);
+                            return;
+                        }
                     }
                 }
 
@@ -641,18 +599,20 @@ public final class IconRequest {
                         fi.delete();
                 }
 
-                // Send entries to the remote backend if necessary
-                if (remoteEntries != null) {
-                    final BackendConfig config = mBuilder.mBackendConfig;
+                // Send request to the backend server
+                final BackendConfig config = mBuilder.mBackendConfig;
+                if (config != null && jsonSb != null) {
                     Bridge.config()
                             .host(config.url)
-                            .defaultHeader("AppId", config.appId)
+                            .defaultHeader("TokenID", config.apiKey)
                             .defaultHeader("Accept", "application/json")
                             .validators(new BackendValidator());
                     try {
-                        Form form = new Form();
-                        form.add("entries", remoteEntries);
-                        Bridge.post("/insert")
+                        MultipartForm form = new MultipartForm();
+                        form.add("archive", zipFile);
+                        form.add("requester", "Anonymous"); // TODO a place to fill this in
+                        form.add("apps", new JSONObject(jsonSb.toString()).toString());
+                        Bridge.post("/v1/request")
                                 .throwIfNotSuccess()
                                 .body(form)
                                 .request();
@@ -667,20 +627,22 @@ public final class IconRequest {
                 for (App app : mSelectedApps)
                     app.setRequested(true);
 
-                // Send email intent
-                IRLog.log("IconRequestSend", "Launching intent!");
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        final Uri zipUri = Uri.fromFile(zipFile);
-                        final Intent emailIntent = new Intent(Intent.ACTION_SEND)
-                                .putExtra(Intent.EXTRA_EMAIL, new String[]{mBuilder.mEmail})
-                                .putExtra(Intent.EXTRA_SUBJECT, mBuilder.mSubject)
-                                .putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getBody()))
-                                .putExtra(Intent.EXTRA_STREAM, zipUri)
-                                .setType("application/zip");
-                        mBuilder.mContext.startActivity(Intent.createChooser(
-                                emailIntent, mBuilder.mContext.getString(R.string.send_using)));
+                        if (config == null) {
+                            // Send email intent
+                            IRLog.log("IconRequestSend", "Launching intent!");
+                            final Uri zipUri = Uri.fromFile(zipFile);
+                            final Intent emailIntent = new Intent(Intent.ACTION_SEND)
+                                    .putExtra(Intent.EXTRA_EMAIL, new String[]{mBuilder.mEmail})
+                                    .putExtra(Intent.EXTRA_SUBJECT, mBuilder.mSubject)
+                                    .putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getBody()))
+                                    .putExtra(Intent.EXTRA_STREAM, zipUri)
+                                    .setType("application/zip");
+                            mBuilder.mContext.startActivity(Intent.createChooser(
+                                    emailIntent, mBuilder.mContext.getString(R.string.send_using)));
+                        }
                         if (mBuilder.mSendCallback != null)
                             mBuilder.mSendCallback.onRequestSent();
                     }

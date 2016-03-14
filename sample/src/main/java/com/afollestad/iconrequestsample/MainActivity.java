@@ -88,7 +88,7 @@ public class MainActivity extends AssentActivity implements AppsLoadCallback, Re
                     .includeDeviceInfo(true) // defaults to true anyways
                     .generateAppFilterXml(true) // defaults to true anyways
                     .generateAppFilterJson(true)
-                    .remoteConfig(new BackendConfig("http://192.168.86.103:6969", "com.afollestad.polar"))
+//                    .remoteConfig(new BackendConfig("http://remoteserver.com:3000", "10b11a80-e991-11e5-9dd9-5936aa169767"))
                     .loadCallback(this)
                     .sendCallback(this)
                     .selectionCallback(this)
@@ -108,6 +108,11 @@ public class MainActivity extends AssentActivity implements AppsLoadCallback, Re
         if (error != null) {
             mProgress.setVisibility(View.VISIBLE);
             mProgress.setText(error.getMessage());
+            mDialog = new MaterialDialog.Builder(this)
+                    .title(R.string.error)
+                    .content(error.getMessage())
+                    .positiveText(android.R.string.ok)
+                    .show();
             return;
         }
         mProgress.setVisibility(View.GONE);
@@ -134,6 +139,11 @@ public class MainActivity extends AssentActivity implements AppsLoadCallback, Re
     public void onRequestError(Exception e) {
         if (mDialog != null)
             mDialog.dismiss();
+        mDialog = new MaterialDialog.Builder(this)
+                .title(R.string.error)
+                .content(e.getMessage())
+                .positiveText(android.R.string.ok)
+                .show();
         mProgress.setText(e.getMessage());
     }
 

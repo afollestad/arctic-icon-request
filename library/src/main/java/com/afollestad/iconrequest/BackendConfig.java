@@ -8,10 +8,10 @@ import java.io.Serializable;
 public final class BackendConfig implements Serializable {
 
     public final String url;
-    public final String appId;
+    public final String apiKey;
 
-    public BackendConfig(String url, String appId) {
+    public BackendConfig(String url, String apiKey) {
         this.url = url;
-        this.appId = appId;
+        this.apiKey = apiKey;
     }
 }
