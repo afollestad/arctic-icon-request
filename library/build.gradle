@@ -25,5 +25,5 @@ dependencies {
     compile 'com.android.support:support-annotations:23.2.1'
     provided 'com.github.bumptech.glide:glide:3.7.0'
     provided 'com.android.support:support-v13:23.2.1'
-    compile 'com.github.afollestad:bridge:9a8fae5961'
+    compile 'com.github.afollestad:bridge:b431813167'
 }
