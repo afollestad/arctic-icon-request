@@ -473,7 +473,7 @@ public final class IconRequest {
 
         if (mApps == null) {
             postError("No apps were loaded from this device.", null);
-        } else if (IRUtils.isEmpty(mBuilder.mEmail)) {
+        } else if (IRUtils.isEmpty(mBuilder.mEmail) && mBuilder.mBackendConfig == null) {
             postError("The recipient email for the request cannot be empty.", null);
         } else if (mSelectedApps == null || mSelectedApps.size() == 0) {
             postError("No apps have been selected for sending in the request.", null);
