@@ -601,6 +601,8 @@ public final class IconRequest {
 
                 // Send request to the backend server
                 final BackendConfig config = mBuilder.mBackendConfig;
+                boolean shouldFallback = false;
+
                 if (config != null && jsonSb != null) {
                     Bridge.config()
                             .host(config.url)
@@ -618,8 +620,13 @@ public final class IconRequest {
                                 .request();
                     } catch (Exception e) {
                         e.printStackTrace();
-                        postError("Failed to send icons to the backend: " + e.getMessage(), e);
-                        return;
+                        if (mBuilder.mBackendConfig.fallbackToEmail) {
+                            IRLog.log("IconRequestSend", "Failed to send icons to the backend, falling back to email.");
+                            shouldFallback = true;
+                        } else {
+                            postError("Failed to send icons to the backend: " + e.getMessage(), e);
+                            return;
+                        }
                     }
                 }
 
@@ -627,10 +634,11 @@ public final class IconRequest {
                 for (App app : mSelectedApps)
                     app.setRequested(true);
 
+                final boolean fShouldFallback = shouldFallback;
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (config == null) {
+                        if (config == null || fShouldFallback) {
                             // Send email intent
                             IRLog.log("IconRequestSend", "Launching intent!");
                             final Uri zipUri = Uri.fromFile(zipFile);
