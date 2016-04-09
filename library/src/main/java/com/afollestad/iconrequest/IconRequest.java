@@ -414,6 +414,7 @@ public final class IconRequest {
     }
 
     public IconRequest selectAllApps() {
+        if (mApps == null) return this;
         boolean changed = false;
         for (App app : mApps) {
             if (app.isRequested()) continue;
@@ -428,7 +429,7 @@ public final class IconRequest {
     }
 
     public void unselectAllApps() {
-        if (mSelectedApps.size() == 0) return;
+        if (mSelectedApps == null || mSelectedApps.size() == 0) return;
         mSelectedApps.clear();
         if (mBuilder.mSelectionCallback != null)
             mBuilder.mSelectionCallback.onAppSelectionChanged(0);
