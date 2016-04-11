@@ -8,6 +8,7 @@ import android.os.Handler;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 
@@ -16,13 +17,39 @@ import java.util.List;
  */
 class ComponentInfoUtil {
 
+    private static class NameComparator implements Comparator<ApplicationInfo> {
+
+        private PackageManager mPM;
+
+        public NameComparator(PackageManager pm) {
+            mPM = pm;
+        }
+
+        @Override
+        public int compare(ApplicationInfo aa, ApplicationInfo ab) {
+            CharSequence sa = mPM.getApplicationLabel(aa);
+            if (sa == null) {
+                sa = aa.packageName;
+            }
+            CharSequence sb = mPM.getApplicationLabel(ab);
+            if (sb == null) {
+                sb = ab.packageName;
+            }
+            return sa.toString().compareTo(sb.toString());
+        }
+    }
+
     public static ArrayList<App> getInstalledApps(final Context context,
                                                   final HashSet<String> filter,
                                                   final AppsLoadCallback cb,
                                                   final Handler handler) {
         final PackageManager pm = context.getPackageManager();
         final List<ApplicationInfo> appInfos = pm.getInstalledApplications(PackageManager.GET_META_DATA);
-        Collections.sort(appInfos, new ApplicationInfo.DisplayNameComparator(pm));
+        try {
+            Collections.sort(appInfos, new NameComparator(pm));
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
         final ArrayList<App> apps = new ArrayList<>();
 
         int loaded = 0;
