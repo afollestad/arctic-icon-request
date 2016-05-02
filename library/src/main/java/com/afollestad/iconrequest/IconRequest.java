@@ -323,8 +323,7 @@ public final class IconRequest {
             throw new IllegalStateException("No load callback has been set.");
         if (mHandler == null)
             mHandler = new Handler();
-        if (mBuilder.mLoadCallback != null)
-            mBuilder.mLoadCallback.onLoadingFilter();
+        mBuilder.mLoadCallback.onLoadingFilter();
         new Thread(new Runnable() {
             @Override
             public void run() {
