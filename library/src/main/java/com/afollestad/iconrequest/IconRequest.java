@@ -43,7 +43,6 @@ public final class IconRequest {
     private ArrayList<App> mApps;
     private ArrayList<App> mSelectedApps;
     private transient Handler mHandler;
-    private transient HashSet<String> mRemoteFilterCache;
 
     private static IconRequest mRequest;
 
@@ -180,12 +179,6 @@ public final class IconRequest {
     }
 
     private StringBuilder mInvalidDrawables;
-
-    public void invalidateRemoteCache() {
-        if (mRemoteFilterCache == null) return;
-        mRemoteFilterCache.clear();
-        mRemoteFilterCache = null;
-    }
 
     @CheckResult
     @Nullable
