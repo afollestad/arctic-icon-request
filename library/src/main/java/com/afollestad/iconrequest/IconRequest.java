@@ -1,5 +1,6 @@
 package com.afollestad.iconrequest;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
@@ -195,7 +196,7 @@ public final class IconRequest {
         } catch (final Throwable e) {
             e.printStackTrace();
             if (mBuilder.mLoadCallback != null) {
-                mHandler.post(new Runnable() {
+                post(new Runnable() {
                     @Override
                     public void run() {
                         mBuilder.mLoadCallback.onAppsLoaded(null, new Exception("Failed to open your filter: " + e.getLocalizedMessage(), e));
@@ -288,7 +289,7 @@ public final class IconRequest {
 
             if (mInvalidDrawables != null && mInvalidDrawables.length() > 0 &&
                     mBuilder.mErrorOnInvalidAppFilterDrawable && mBuilder.mLoadCallback != null) {
-                mHandler.post(new Runnable() {
+                post(new Runnable() {
                     @Override
                     public void run() {
                         mBuilder.mLoadCallback.onAppsLoaded(null, new Exception(mInvalidDrawables.toString()));
@@ -302,7 +303,7 @@ public final class IconRequest {
         } catch (final Throwable e) {
             e.printStackTrace();
             if (mBuilder.mLoadCallback != null) {
-                mHandler.post(new Runnable() {
+                post(new Runnable() {
                     @Override
                     public void run() {
                         mBuilder.mLoadCallback.onAppsLoaded(null, new Exception("Failed to read your filter: " + e.getMessage(), e));
@@ -332,7 +333,7 @@ public final class IconRequest {
                 IRLog.log("IconRequestApps", "Loading unthemed installed apps...");
                 mApps = ComponentInfoUtil.getInstalledApps(mBuilder.mContext,
                         filter, mBuilder.mLoadCallback, mHandler);
-                mHandler.post(new Runnable() {
+                post(new Runnable() {
                     @Override
                     public void run() {
                         mBuilder.mLoadCallback.onAppsLoaded(mApps, null);
@@ -443,10 +444,20 @@ public final class IconRequest {
         return mSelectedApps;
     }
 
+    private void post(Runnable runnable) {
+        if (mBuilder.mContext == null ||
+                (mBuilder.mContext instanceof Activity && ((Activity) mBuilder.mContext).isFinishing())) {
+            return;
+        } else if (mHandler == null) {
+            return;
+        }
+        mHandler.post(runnable);
+    }
+
     @WorkerThread
     private void postError(@NonNull final String msg, @Nullable final Exception baseError) {
         if (mBuilder.mSendCallback != null) {
-            mHandler.post(new Runnable() {
+            post(new Runnable() {
                 @Override
                 public void run() {
                     mBuilder.mSendCallback.onRequestError(new Exception(msg, baseError));
@@ -628,7 +639,7 @@ public final class IconRequest {
                     app.setRequested(true);
 
                 final boolean fShouldFallback = shouldFallback;
-                mHandler.post(new Runnable() {
+                post(new Runnable() {
                     @Override
                     public void run() {
                         if (config == null || fShouldFallback) {
