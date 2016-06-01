@@ -62,14 +62,6 @@ public class App implements Serializable {
         return mPkg;
     }
 
-    public boolean isRequested() {
-        return mRequested;
-    }
-
-    public void setRequested(boolean requested) {
-        this.mRequested = requested;
-    }
-
     @Nullable
     public ApplicationInfo getAppInfo(Context context) {
         try {

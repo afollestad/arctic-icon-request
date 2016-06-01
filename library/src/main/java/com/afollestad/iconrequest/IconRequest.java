@@ -376,8 +376,6 @@ public final class IconRequest {
     }
 
     public boolean selectApp(@NonNull App app) {
-        if (app.isRequested())
-            return false;
         if (!mSelectedApps.contains(app)) {
             mSelectedApps.add(app);
             if (mBuilder.mSelectionCallback != null)
@@ -410,7 +408,6 @@ public final class IconRequest {
         if (mApps == null) return this;
         boolean changed = false;
         for (App app : mApps) {
-            if (app.isRequested()) continue;
             if (!mSelectedApps.contains(app)) {
                 changed = true;
                 mSelectedApps.add(app);
@@ -633,10 +630,6 @@ public final class IconRequest {
                         }
                     }
                 }
-
-                // Mark apps as requested
-                for (App app : mSelectedApps)
-                    app.setRequested(true);
 
                 final boolean fShouldFallback = shouldFallback;
                 post(new Runnable() {
