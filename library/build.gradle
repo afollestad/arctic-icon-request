@@ -3,17 +3,20 @@ apply plugin: 'com.android.library'
 ext {
     PUBLISH_GROUP_ID = 'com.afollestad'
     PUBLISH_ARTIFACT_ID = 'icon-request'
-    PUBLISH_VERSION = '1.3.7'
+    PUBLISH_VERSION = '1.3.8'
+    TARGET_SDK = 24
+    BUILD_TOOLS = "24.0.0"
+    GOOGLE_LIBS = "24.0.0"
 }
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.3"
+    compileSdkVersion TARGET_SDK
+    buildToolsVersion BUILD_TOOLS
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 23
-        versionCode 11
+        targetSdkVersion TARGET_SDK
+        versionCode 13
         versionName PUBLISH_VERSION
     }
     lintOptions {
@@ -28,10 +31,11 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-annotations:23.4.0'
+    compile "com.android.support:support-annotations:$GOOGLE_LIBS"
+    compile 'com.afollestad:bridge:3.2.2'
+
     provided 'com.github.bumptech.glide:glide:3.7.0'
-    provided 'com.android.support:support-v13:23.4.0'
-    compile 'com.afollestad:bridge:3.2.1'
+    provided "com.android.support:support-v13:$GOOGLE_LIBS"
 }
 
-apply from: 'https://raw.githubusercontent.com/afollestad/aidanfollestad.com/master/android-release-aar.gradle'
+apply from: 'https://raw.githubusercontent.com/afollestad/aidanfollestad.com/master/android-lib-release.gradle'
