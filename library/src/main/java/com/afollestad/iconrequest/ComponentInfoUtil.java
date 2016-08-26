@@ -73,7 +73,7 @@ class ComponentInfoUtil {
                 continue;
             }
 
-//            IRLog.log("IconRequestApps", "Loaded %s", launchStr);
+            // IRLog.log("IconRequestApps", "Loaded %s", launchStr);
             final String name = ai.loadLabel(pm).toString();
             apps.add(new App(name, launchStr, ai.packageName, false));
 

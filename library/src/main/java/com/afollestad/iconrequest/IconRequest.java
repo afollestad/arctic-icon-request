@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.text.Html;
 
@@ -39,6 +40,8 @@ import java.util.Locale;
  * @author Aidan Follestad (afollestad)
  */
 public final class IconRequest {
+
+    private static final Object LOCK = new Object();
 
     private Builder mBuilder;
     private ArrayList<App> mApps;
@@ -183,6 +186,7 @@ public final class IconRequest {
 
     @CheckResult
     @Nullable
+    @WorkerThread
     private HashSet<String> loadFilterApps() {
         final HashSet<String> defined = new HashSet<>();
         if (IRUtils.isEmpty(mBuilder.mFilterName))
@@ -319,28 +323,42 @@ public final class IconRequest {
         return defined;
     }
 
+    @UiThread
     public void loadApps() {
-        if (mBuilder.mLoadCallback == null)
-            throw new IllegalStateException("No load callback has been set.");
-        if (mHandler == null)
-            mHandler = new Handler();
-        mBuilder.mLoadCallback.onLoadingFilter();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final HashSet<String> filter = loadFilterApps();
-                if (filter == null) return;
-                IRLog.log("IconRequestApps", "Loading unthemed installed apps...");
-                mApps = ComponentInfoUtil.getInstalledApps(mBuilder.mContext,
-                        filter, mBuilder.mLoadCallback, mHandler);
-                post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mBuilder.mLoadCallback.onAppsLoaded(mApps, null);
+        synchronized (LOCK) {
+            if (mBuilder.mLoadCallback == null)
+                throw new IllegalStateException("No load callback has been set.");
+            if (mHandler == null)
+                mHandler = new Handler();
+
+            PerfUtil.begin("loading filter");
+            mBuilder.mLoadCallback.onLoadingFilter();
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final HashSet<String> filter = loadFilterApps();
+                    PerfUtil.end();
+                    if (filter == null) {
+                        // If this is the case, an error was already posted
+                        return;
                     }
-                });
-            }
-        }).start();
+
+                    PerfUtil.begin("loading unthemed installed apps");
+                    IRLog.log("IconRequestApps", "Loading unthemed installed apps...");
+                    mApps = ComponentInfoUtil.getInstalledApps(mBuilder.mContext,
+                            filter, mBuilder.mLoadCallback, mHandler);
+                    PerfUtil.end();
+
+                    post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mBuilder.mLoadCallback.onAppsLoaded(mApps, null);
+                        }
+                    });
+                }
+            }).start();
+        }
     }
 
     @SuppressWarnings("MalformedFormatString")
@@ -375,70 +393,91 @@ public final class IconRequest {
         return sb.toString();
     }
 
+    @UiThread
     public boolean selectApp(@NonNull App app) {
-        if (!mSelectedApps.contains(app)) {
-            mSelectedApps.add(app);
-            if (mBuilder.mSelectionCallback != null)
-                mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
-            return true;
+        synchronized (LOCK) {
+            if (!mSelectedApps.contains(app)) {
+                mSelectedApps.add(app);
+                if (mBuilder.mSelectionCallback != null)
+                    mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
+                return true;
+            }
+            return false;
         }
-        return false;
     }
 
+    @UiThread
     public boolean unselectApp(@NonNull App app) {
-        final boolean result = mSelectedApps.remove(app);
-        if (result && mBuilder.mSelectionCallback != null)
-            mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
-        return result;
+        synchronized (LOCK) {
+            final boolean result = mSelectedApps.remove(app);
+            if (result && mBuilder.mSelectionCallback != null)
+                mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
+            return result;
+        }
     }
 
+    @UiThread
     public boolean toggleAppSelected(@NonNull App app) {
-        final boolean result;
-        if (isAppSelected(app))
-            result = unselectApp(app);
-        else result = selectApp(app);
-        return result;
+        synchronized (LOCK) {
+            final boolean result;
+            if (isAppSelected(app))
+                result = unselectApp(app);
+            else result = selectApp(app);
+            return result;
+        }
     }
 
     public boolean isAppSelected(@NonNull App app) {
-        return mSelectedApps.contains(app);
+        synchronized (LOCK) {
+            return mSelectedApps.contains(app);
+        }
     }
 
     public IconRequest selectAllApps() {
-        if (mApps == null) return this;
-        boolean changed = false;
-        for (App app : mApps) {
-            if (!mSelectedApps.contains(app)) {
-                changed = true;
-                mSelectedApps.add(app);
+        synchronized (LOCK) {
+            if (mApps == null) return this;
+            boolean changed = false;
+            for (App app : mApps) {
+                if (!mSelectedApps.contains(app)) {
+                    changed = true;
+                    mSelectedApps.add(app);
+                }
             }
+            if (changed && mBuilder.mSelectionCallback != null)
+                mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
+            return this;
         }
-        if (changed && mBuilder.mSelectionCallback != null)
-            mBuilder.mSelectionCallback.onAppSelectionChanged(mSelectedApps.size());
-        return this;
     }
 
     public void unselectAllApps() {
-        if (mSelectedApps == null || mSelectedApps.size() == 0) return;
-        mSelectedApps.clear();
-        if (mBuilder.mSelectionCallback != null)
-            mBuilder.mSelectionCallback.onAppSelectionChanged(0);
+        synchronized (LOCK) {
+            if (mSelectedApps == null || mSelectedApps.size() == 0) return;
+            mSelectedApps.clear();
+            if (mBuilder.mSelectionCallback != null)
+                mBuilder.mSelectionCallback.onAppSelectionChanged(0);
+        }
     }
 
     public boolean isAppsLoaded() {
-        return getApps() != null && getApps().size() > 0;
+        synchronized (LOCK) {
+            return getApps() != null && getApps().size() > 0;
+        }
     }
 
     @Nullable
     public ArrayList<App> getApps() {
-        return mApps;
+        synchronized (LOCK) {
+            return mApps;
+        }
     }
 
     @NonNull
     public ArrayList<App> getSelectedApps() {
-        if (mSelectedApps == null)
-            mSelectedApps = new ArrayList<>();
-        return mSelectedApps;
+        synchronized (LOCK) {
+            if (mSelectedApps == null)
+                mSelectedApps = new ArrayList<>();
+            return mSelectedApps;
+        }
     }
 
     private void post(Runnable runnable) {
@@ -451,7 +490,6 @@ public final class IconRequest {
         mHandler.post(runnable);
     }
 
-    @WorkerThread
     private void postError(@NonNull final String msg, @Nullable final Exception baseError) {
         if (mBuilder.mSendCallback != null) {
             post(new Runnable() {
@@ -465,197 +503,236 @@ public final class IconRequest {
         }
     }
 
+    @UiThread
     public void send() {
-        IRLog.log("IconRequestSend", "Preparing your request to send...");
-        if (mBuilder.mSendCallback != null)
-            mBuilder.mSendCallback.onRequestPreparing();
-        if (mHandler == null)
-            mHandler = new Handler();
+        synchronized (LOCK) {
+            IRLog.log("IconRequestSend", "Preparing your request to send...");
+            if (mBuilder.mSendCallback != null)
+                mBuilder.mSendCallback.onRequestPreparing();
+            if (mHandler == null)
+                mHandler = new Handler();
 
-        if (mApps == null) {
-            postError("No apps were loaded from this device.", null);
-        } else if (IRUtils.isEmpty(mBuilder.mEmail) && mBuilder.mBackendConfig == null) {
-            postError("The recipient email for the request cannot be empty.", null);
-        } else if (mSelectedApps == null || mSelectedApps.size() == 0) {
-            postError("No apps have been selected for sending in the request.", null);
-        } else if (IRUtils.isEmpty(mBuilder.mSubject)) {
-            mBuilder.mSubject = "Icon Request";
-        }
+            if (mApps == null) {
+                postError("No apps were loaded from this device.", null);
+                return;
+            } else if (IRUtils.isEmpty(mBuilder.mEmail) && mBuilder.mBackendConfig == null) {
+                postError("The recipient email for the request cannot be empty.", null);
+                return;
+            } else if (mSelectedApps == null || mSelectedApps.size() == 0) {
+                postError("No apps have been selected for sending in the request.", null);
+                return;
+            } else if (IRUtils.isEmpty(mBuilder.mSubject)) {
+                IRLog.log("IconRequestSend", "Using default email subject.");
+                mBuilder.mSubject = "Icon Request";
+            }
 
-        new Thread(new Runnable() {
-            @SuppressWarnings("ResultOfMethodCallIgnored")
-            @Override
-            public void run() {
-                final ArrayList<File> filesToZip = new ArrayList<>();
-                mBuilder.mSaveDir.mkdirs();
+            if (mBuilder.mSaveDir == null || !mBuilder.mSaveDir.mkdirs()) {
+                postError("Unable to create folders: " + (mBuilder.mSaveDir != null ? mBuilder.mSaveDir.getAbsolutePath() : "(null)"), null);
+                return;
+            }
 
-                // Save app icons
-                IRLog.log("IconRequestSend", "Saving icons...");
-                for (App app : mSelectedApps) {
-                    final Drawable drawable = app.getIcon(mBuilder.mContext);
-                    if (!(drawable instanceof BitmapDrawable)) continue;
-                    final BitmapDrawable bDrawable = (BitmapDrawable) drawable;
-                    final Bitmap icon = bDrawable.getBitmap();
-                    final File file = new File(mBuilder.mSaveDir,
-                            String.format("%s.png", app.getPackage()));
-                    filesToZip.add(file);
-                    try {
-                        FileUtil.writeIcon(file, icon);
-                    } catch (final Exception e) {
-                        e.printStackTrace();
-                        postError("Failed to save an icon: " + e.getMessage(), e);
-                        return;
-                    }
-                }
+            new Thread(new Runnable() {
+                @SuppressWarnings("ResultOfMethodCallIgnored")
+                @Override
+                public void run() {
+                    final ArrayList<File> filesToZip = new ArrayList<>();
 
-                // Create appfilter
-                IRLog.log("IconRequestSend", "Creating appfilter...");
-                StringBuilder xmlSb = null;
-                StringBuilder jsonSb = null;
-                if (mBuilder.mGenerateAppFilterXml && mBuilder.mBackendConfig == null) {
-                    xmlSb = new StringBuilder("<resources>\n" +
-                            "    <iconback img1=\"iconback\" />\n" +
-                            "    <iconmask img1=\"iconmask\" />\n" +
-                            "    <iconupon img1=\"iconupon\" />\n" +
-                            "    <scale factor=\"1.0\" />");
-                }
-                if (mBuilder.mGenerateAppFilterJson || mBuilder.mBackendConfig != null) {
-                    jsonSb = new StringBuilder("{\n" +
-                            "    \"components\": [");
-                }
-                int index = 0;
-                for (App app : mSelectedApps) {
-                    final String name = app.getName();
-                    final String drawableName = IRUtils.drawableName(name);
-                    if (xmlSb != null) {
-                        xmlSb.append("\n\n    <!-- ");
-                        xmlSb.append(name);
-                        xmlSb.append(" -->\n");
-                        xmlSb.append(String.format("    <item\n" +
-                                        "        component=\"ComponentInfo{%s}\"\n" +
-                                        "        drawable=\"%s\" />",
-                                app.getCode(), drawableName));
-                    }
-                    if (jsonSb != null) {
-                        if (index > 0) jsonSb.append(",");
-                        jsonSb.append("\n        {\n");
-                        jsonSb.append(String.format("            \"%s\": \"%s\",\n", "name", name));
-                        jsonSb.append(String.format("            \"%s\": \"%s\",\n", "pkg", app.getPackage()));
-                        jsonSb.append(String.format("            \"%s\": \"%s\",\n", "componentInfo", app.getCode()));
-                        jsonSb.append(String.format("            \"%s\": \"%s\"\n", "drawable", drawableName));
-                        jsonSb.append("        }");
-                    }
-                    index++;
-                }
-                if (xmlSb != null) {
-                    xmlSb.append("\n\n</resources>");
-                    final File newAppFilter = new File(mBuilder.mSaveDir, "appfilter.xml");
-                    filesToZip.add(newAppFilter);
-                    try {
-                        FileUtil.writeAll(newAppFilter, xmlSb.toString());
-                    } catch (final Exception e) {
-                        e.printStackTrace();
-                        postError("Failed to write your request appfilter.xml file: " + e.getMessage(), e);
-                        return;
-                    }
-                }
-                if (jsonSb != null) {
-                    jsonSb.append("\n    ]\n}");
-                    if (mBuilder.mBackendConfig == null) {
-                        final File newAppFilter = new File(mBuilder.mSaveDir, "appfilter.json");
-                        filesToZip.add(newAppFilter);
+                    // Save app icons
+                    IRLog.log("IconRequestSend", "Saving icons...");
+                    PerfUtil.begin("saving icons");
+
+                    for (App app : mSelectedApps) {
+                        final Drawable drawable = app.getIcon(mBuilder.mContext);
+                        if (!(drawable instanceof BitmapDrawable)) {
+                            IRLog.log("IconRequestSend", "Icon for " + app.getCode() + " didn't return a BitmapDrawable.");
+                            continue;
+                        }
+                        final BitmapDrawable bDrawable = (BitmapDrawable) drawable;
+                        final Bitmap icon = bDrawable.getBitmap();
+                        final File file = new File(mBuilder.mSaveDir,
+                                String.format("%s.png", app.getPackage()));
+                        filesToZip.add(file);
                         try {
-                            FileUtil.writeAll(newAppFilter, jsonSb.toString());
+                            FileUtil.writeIcon(file, icon);
+                            IRLog.log("IconRequestSend", "Saved icon: " + file.getAbsolutePath());
                         } catch (final Exception e) {
                             e.printStackTrace();
-                            postError("Failed to write your request appfilter.json file: " + e.getMessage(), e);
+                            postError("Failed to save an icon: " + e.getMessage(), e);
                             return;
                         }
                     }
-                }
+                    PerfUtil.end();
 
-                if (filesToZip.size() == 0) {
-                    postError("There are no files to put into the ZIP archive.", null);
-                    return;
-                }
+                    // Create appfilter
+                    IRLog.log("IconRequestSend", "Creating appfilter...");
+                    PerfUtil.begin("creating appfilter");
 
-                // Zip everything into an archive
-                IRLog.log("IconRequestSend", "Creating ZIP...");
-                final SimpleDateFormat df = new SimpleDateFormat("yyyy.MM.dd", Locale.getDefault());
-                final File zipFile = new File(mBuilder.mSaveDir,
-                        String.format("IconRequest-%s.zip", df.format(new Date())));
-                try {
-                    ZipUtil.zip(zipFile, filesToZip.toArray(new File[filesToZip.size()]));
-                } catch (final Exception e) {
-                    e.printStackTrace();
-                    postError("Failed to create the request ZIP file: " + e.getMessage(), e);
-                    return;
-                }
+                    StringBuilder xmlSb = null;
+                    StringBuilder jsonSb = null;
+                    if (mBuilder.mGenerateAppFilterXml && mBuilder.mBackendConfig == null) {
+                        xmlSb = new StringBuilder("<resources>\n" +
+                                "    <iconback img1=\"iconback\" />\n" +
+                                "    <iconmask img1=\"iconmask\" />\n" +
+                                "    <iconupon img1=\"iconupon\" />\n" +
+                                "    <scale factor=\"1.0\" />");
+                    }
+                    if (mBuilder.mGenerateAppFilterJson || mBuilder.mBackendConfig != null) {
+                        jsonSb = new StringBuilder("{\n" +
+                                "    \"components\": [");
+                    }
+                    int index = 0;
+                    for (App app : mSelectedApps) {
+                        final String name = app.getName();
+                        final String drawableName = IRUtils.drawableName(name);
+                        if (xmlSb != null) {
+                            xmlSb.append("\n\n    <!-- ");
+                            xmlSb.append(name);
+                            xmlSb.append(" -->\n");
+                            xmlSb.append(String.format("    <item\n" +
+                                            "        component=\"ComponentInfo{%s}\"\n" +
+                                            "        drawable=\"%s\" />",
+                                    app.getCode(), drawableName));
+                        }
+                        if (jsonSb != null) {
+                            if (index > 0) jsonSb.append(",");
+                            jsonSb.append("\n        {\n");
+                            jsonSb.append(String.format("            \"%s\": \"%s\",\n", "name", name));
+                            jsonSb.append(String.format("            \"%s\": \"%s\",\n", "pkg", app.getPackage()));
+                            jsonSb.append(String.format("            \"%s\": \"%s\",\n", "componentInfo", app.getCode()));
+                            jsonSb.append(String.format("            \"%s\": \"%s\"\n", "drawable", drawableName));
+                            jsonSb.append("        }");
+                        }
+                        IRLog.log("IconRequestSend", "Added " + app.getCode() + " to the new generated appfilter file...");
+                        index++;
+                    }
 
-                // Cleanup files
-                IRLog.log("IconRequestSend", "Cleaning up files...");
-                final File[] files = mBuilder.mSaveDir.listFiles();
-                for (File fi : files) {
-                    if (!fi.isDirectory() && (fi.getName().endsWith(".png") || fi.getName().endsWith(".xml")))
-                        fi.delete();
-                }
+                    if (xmlSb != null) {
+                        xmlSb.append("\n\n</resources>");
+                        final File newAppFilter = new File(mBuilder.mSaveDir, "appfilter.xml");
+                        filesToZip.add(newAppFilter);
+                        try {
+                            FileUtil.writeAll(newAppFilter, xmlSb.toString());
+                            IRLog.log("IconRequestSend", "Generated appfilter saved to " + newAppFilter.getAbsolutePath());
+                        } catch (final Exception e) {
+                            e.printStackTrace();
+                            postError("Failed to write your request appfilter.xml file: " + e.getMessage(), e);
+                            return;
+                        }
+                    }
+                    if (jsonSb != null) {
+                        jsonSb.append("\n    ]\n}");
+                        if (mBuilder.mBackendConfig == null) {
+                            final File newAppFilter = new File(mBuilder.mSaveDir, "appfilter.json");
+                            filesToZip.add(newAppFilter);
+                            try {
+                                FileUtil.writeAll(newAppFilter, jsonSb.toString());
+                                IRLog.log("IconRequestSend", "Generated appfilter JSON saved to: " + newAppFilter.getAbsolutePath());
+                            } catch (final Exception e) {
+                                e.printStackTrace();
+                                postError("Failed to write your request appfilter.json file: " + e.getMessage(), e);
+                                return;
+                            }
+                        }
+                    }
+                    PerfUtil.end();
 
-                // Send request to the backend server
-                final BackendConfig config = mBuilder.mBackendConfig;
-                boolean shouldFallback = false;
+                    if (filesToZip.size() == 0) {
+                        postError("There are no PNG files to put into the ZIP archive.", null);
+                        return;
+                    }
 
-                if (config != null && jsonSb != null) {
-                    Bridge.config()
-                            .host(config.url)
-                            .defaultHeader("TokenID", config.apiKey)
-                            .defaultHeader("Accept", "application/json")
-                            .validators(new BackendValidator());
+                    // Zip everything into an archive
+                    IRLog.log("IconRequestSend", "Creating ZIP...");
+                    PerfUtil.begin("creating ZIP");
+
+                    final SimpleDateFormat df = new SimpleDateFormat("yyyy.MM.dd", Locale.getDefault());
+                    final File zipFile = new File(mBuilder.mSaveDir,
+                            String.format("IconRequest-%s.zip", df.format(new Date())));
                     try {
-                        MultipartForm form = new MultipartForm();
-                        form.add("archive", zipFile);
-                        form.add("requester", "Anonymous"); // TODO a place to fill this in
-                        form.add("apps", new JSONObject(jsonSb.toString()).toString());
-                        Bridge.post("/v1/request")
-                                .throwIfNotSuccess()
-                                .body(form)
-                                .request();
-                    } catch (Exception e) {
+                        ZipUtil.zip(zipFile, filesToZip.toArray(new File[filesToZip.size()]));
+                        IRLog.log("IconRequestSend", "ZIP created at " + zipFile.getAbsolutePath());
+                    } catch (final Exception e) {
                         e.printStackTrace();
-                        if (mBuilder.mBackendConfig.fallbackToEmail) {
-                            IRLog.log("IconRequestSend", "Failed to send icons to the backend, falling back to email.");
-                            shouldFallback = true;
-                        } else {
-                            postError("Failed to send icons to the backend: " + e.getMessage(), e);
-                            return;
-                        }
+                        postError("Failed to create the request ZIP file: " + e.getMessage(), e);
+                        return;
                     }
-                }
+                    PerfUtil.end();
 
-                final boolean fShouldFallback = shouldFallback;
-                post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (config == null || fShouldFallback) {
-                            // Send email intent
-                            IRLog.log("IconRequestSend", "Launching intent!");
-                            final Uri zipUri = Uri.fromFile(zipFile);
-                            final Intent emailIntent = new Intent(Intent.ACTION_SEND)
-                                    .putExtra(Intent.EXTRA_EMAIL, new String[]{mBuilder.mEmail})
-                                    .putExtra(Intent.EXTRA_SUBJECT, mBuilder.mSubject)
-                                    .putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getBody()))
-                                    .putExtra(Intent.EXTRA_STREAM, zipUri)
-                                    .setType("application/zip");
-                            mBuilder.mContext.startActivity(Intent.createChooser(
-                                    emailIntent, mBuilder.mContext.getString(R.string.send_using)));
+                    // Cleanup files
+                    PerfUtil.begin("cleaning up files");
+                    IRLog.log("IconRequestSend", "Cleaning up files...");
+                    final File[] files = mBuilder.mSaveDir.listFiles();
+                    for (File fi : files) {
+                        if (!fi.isDirectory() && (fi.getName().endsWith(".png") || fi.getName().endsWith(".xml") || fi.getName().endsWith(".json"))) {
+                            fi.delete();
+                            IRLog.log("IconRequestSend", "Deleted: " + fi.getAbsolutePath());
                         }
-                        if (mBuilder.mSendCallback != null)
-                            mBuilder.mSendCallback.onRequestSent();
                     }
-                });
-            }
-        }).start();
+                    PerfUtil.end();
+
+                    // Send request to the backend server
+                    final BackendConfig config = mBuilder.mBackendConfig;
+                    boolean shouldFallback = false;
+
+                    if (config != null && jsonSb != null) {
+                        PerfUtil.begin("uploading request");
+                        Bridge.config()
+                                .host(config.url)
+                                .defaultHeader("TokenID", config.apiKey)
+                                .defaultHeader("Accept", "application/json")
+                                .defaultHeader("User-Agent", "afollestad/icon-request")
+                                .validators(new BackendValidator());
+                        try {
+                            MultipartForm form = new MultipartForm();
+                            form.add("archive", zipFile);
+                            form.add("requester", config.getSender());
+                            form.add("apps", new JSONObject(jsonSb.toString()).toString());
+                            Bridge.post("/v1/request")
+                                    .throwIfNotSuccess()
+                                    .body(form)
+                                    .request();
+                            IRLog.log("IconRequestSend", "Request uploaded to the server!");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            if (mBuilder.mBackendConfig.fallbackToEmail) {
+                                IRLog.log("IconRequestSend", "Failed to send icons to the backend, falling back to email.");
+                                shouldFallback = true;
+                            } else {
+                                postError("Failed to send icons to the backend: " + e.getMessage(), e);
+                                return;
+                            }
+                        }
+                        PerfUtil.end();
+                    }
+
+                    final boolean fShouldFallback = shouldFallback;
+                    post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (config == null || fShouldFallback) {
+                                // Send email intent
+                                IRLog.log("IconRequestSend", "Launching intent!");
+                                final Uri zipUri = Uri.fromFile(zipFile);
+                                final Intent emailIntent = new Intent(Intent.ACTION_SEND)
+                                        .putExtra(Intent.EXTRA_EMAIL, new String[]{mBuilder.mEmail})
+                                        .putExtra(Intent.EXTRA_SUBJECT, mBuilder.mSubject)
+                                        .putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getBody()))
+                                        .putExtra(Intent.EXTRA_STREAM, zipUri)
+                                        .setType("application/zip");
+                                mBuilder.mContext.startActivity(Intent.createChooser(
+                                        emailIntent, mBuilder.mContext.getString(R.string.send_using)));
+                            }
+                            IRLog.log("IconRequestSend", "Done!");
+                            if (mBuilder.mSendCallback != null)
+                                mBuilder.mSendCallback.onRequestSent();
+                        }
+                    });
+                }
+            }).start();
+        }
     }
 
+    @UiThread
     public static void saveInstanceState(Bundle outState) {
         if (mRequest == null || outState == null) return;
         outState.putSerializable("builder", mRequest.mBuilder);
@@ -665,6 +742,7 @@ public final class IconRequest {
 
     @SuppressWarnings("unchecked")
     @Nullable
+    @UiThread
     public static IconRequest restoreInstanceState(Context context, Bundle inState,
                                                    AppsLoadCallback loadCb,
                                                    RequestSendCallback sendCb,
@@ -694,21 +772,24 @@ public final class IconRequest {
         return mRequest;
     }
 
+    @UiThread
     public static void cleanup() {
-        if (mRequest == null) return;
-        if (mRequest.mBuilder != null) {
-            mRequest.mBuilder.mContext = null;
-            mRequest.mBuilder = null;
+        synchronized (LOCK) {
+            if (mRequest == null) return;
+            if (mRequest.mBuilder != null) {
+                mRequest.mBuilder.mContext = null;
+                mRequest.mBuilder = null;
+            }
+            mRequest.mHandler = null;
+            if (mRequest.mApps != null) {
+                mRequest.mApps.clear();
+                mRequest.mApps = null;
+            }
+            if (mRequest.mSelectedApps != null) {
+                mRequest.mSelectedApps.clear();
+                mRequest.mSelectedApps = null;
+            }
+            mRequest = null;
         }
-        mRequest.mHandler = null;
-        if (mRequest.mApps != null) {
-            mRequest.mApps.clear();
-            mRequest.mApps = null;
-        }
-        if (mRequest.mSelectedApps != null) {
-            mRequest.mSelectedApps.clear();
-            mRequest.mSelectedApps = null;
-        }
-        mRequest = null;
     }
 }

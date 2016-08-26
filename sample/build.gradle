@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 ext {
-    PUBLISH_VERSION = "1.3.8"
+    PUBLISH_VERSION = "1.4.0"
     TARGET_SDK = 24
     BUILD_TOOLS = "24.0.1"
     GOOGLE_LIBS = "24.2.0"
@@ -15,7 +15,7 @@ android {
         applicationId "com.afollestad.iconrequestsample"
         minSdkVersion 14
         targetSdkVersion TARGET_SDK
-        versionCode 13
+        versionCode 14
         versionName PUBLISH_VERSION
     }
     lintOptions {
