@@ -1,5 +1,6 @@
 package com.afollestad.iconrequestsample;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
@@ -144,6 +145,11 @@ public class MainActivity extends AssentActivity implements AppsLoadCallback, Re
                 .positiveText(android.R.string.ok)
                 .show();
         mProgress.setText(e.getMessage());
+    }
+
+    @Override
+    public Uri onRequestProcessUri(Uri uri) {
+        return uri;
     }
 
     @Override
