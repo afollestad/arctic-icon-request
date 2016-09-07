@@ -6,25 +6,19 @@ import java.util.Locale;
 /**
  * @author Aidan Follestad (afollestad)
  */
-public final class BackendConfig implements Serializable {
+public final class RemoteConfig implements Serializable {
 
     public final String url;
     public final String apiKey;
     public String sender;
-    public boolean fallbackToEmail = false;
 
-    public BackendConfig(String url, String apiKey) {
+    public RemoteConfig(String url, String apiKey) {
         this.url = url;
         this.apiKey = apiKey;
         this.sender = "Anonymous";
     }
 
-    public BackendConfig fallbackToEmail(boolean fallback) {
-        fallbackToEmail = fallback;
-        return this;
-    }
-
-    public BackendConfig sender(String sender) {
+    public RemoteConfig sender(String sender) {
         this.sender = sender;
         return this;
     }

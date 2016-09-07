@@ -11,7 +11,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
@@ -73,7 +72,7 @@ public final class IconRequest {
         protected boolean mGenerateAppFilterXml = true;
         protected boolean mGenerateAppFilterJson;
         protected boolean mErrorOnInvalidAppFilterDrawable = true;
-        protected BackendConfig mBackendConfig = null;
+        protected RemoteConfig mRemoteConfig = null;
 
         protected transient AppsLoadCallback mLoadCallback;
         protected transient RequestSendCallback mSendCallback;
@@ -84,7 +83,7 @@ public final class IconRequest {
 
         public Builder(@NonNull Context context) {
             mContext = context;
-            mSaveDir = new File(Environment.getExternalStorageDirectory(), "IconRequest");
+            mSaveDir = new File(context.getCacheDir(), "IconRequest");
             FileUtil.wipe(mSaveDir);
         }
 
@@ -164,8 +163,8 @@ public final class IconRequest {
             return this;
         }
 
-        public Builder remoteConfig(@Nullable BackendConfig config) {
-            mBackendConfig = config;
+        public Builder remoteConfig(@Nullable RemoteConfig config) {
+            mRemoteConfig = config;
             return this;
         }
 
@@ -515,7 +514,7 @@ public final class IconRequest {
             if (mApps == null) {
                 postError("No apps were loaded from this device.", null);
                 return;
-            } else if (IRUtils.isEmpty(mBuilder.mEmail) && mBuilder.mBackendConfig == null) {
+            } else if (IRUtils.isEmpty(mBuilder.mEmail) && mBuilder.mRemoteConfig == null) {
                 postError("The recipient email for the request cannot be empty.", null);
                 return;
             } else if (mSelectedApps == null || mSelectedApps.size() == 0) {
@@ -569,14 +568,14 @@ public final class IconRequest {
 
                     StringBuilder xmlSb = null;
                     StringBuilder jsonSb = null;
-                    if (mBuilder.mGenerateAppFilterXml && mBuilder.mBackendConfig == null) {
+                    if (mBuilder.mGenerateAppFilterXml && mBuilder.mRemoteConfig == null) {
                         xmlSb = new StringBuilder("<resources>\n" +
                                 "    <iconback img1=\"iconback\" />\n" +
                                 "    <iconmask img1=\"iconmask\" />\n" +
                                 "    <iconupon img1=\"iconupon\" />\n" +
                                 "    <scale factor=\"1.0\" />");
                     }
-                    if (mBuilder.mGenerateAppFilterJson || mBuilder.mBackendConfig != null) {
+                    if (mBuilder.mGenerateAppFilterJson || mBuilder.mRemoteConfig != null) {
                         jsonSb = new StringBuilder("{\n" +
                                 "    \"components\": [");
                     }
@@ -621,7 +620,7 @@ public final class IconRequest {
                     }
                     if (jsonSb != null) {
                         jsonSb.append("\n    ]\n}");
-                        if (mBuilder.mBackendConfig == null) {
+                        if (mBuilder.mRemoteConfig == null) {
                             final File newAppFilter = new File(mBuilder.mSaveDir, "appfilter.json");
                             filesToZip.add(newAppFilter);
                             try {
@@ -671,8 +670,7 @@ public final class IconRequest {
                     PerfUtil.end();
 
                     // Send request to the backend server
-                    final BackendConfig config = mBuilder.mBackendConfig;
-                    boolean shouldFallback = false;
+                    final RemoteConfig config = mBuilder.mRemoteConfig;
 
                     if (config != null && jsonSb != null) {
                         PerfUtil.begin("uploading request");
@@ -681,7 +679,7 @@ public final class IconRequest {
                                 .defaultHeader("TokenID", config.apiKey)
                                 .defaultHeader("Accept", "application/json")
                                 .defaultHeader("User-Agent", "afollestad/icon-request")
-                                .validators(new BackendValidator());
+                                .validators(new RemoteValidator());
                         try {
                             MultipartForm form = new MultipartForm();
                             form.add("archive", zipFile);
@@ -694,22 +692,17 @@ public final class IconRequest {
                             IRLog.log("IconRequestSend", "Request uploaded to the server!");
                         } catch (Exception e) {
                             e.printStackTrace();
-                            if (mBuilder.mBackendConfig.fallbackToEmail) {
-                                IRLog.log("IconRequestSend", "Failed to send icons to the backend, falling back to email.");
-                                shouldFallback = true;
-                            } else {
-                                postError("Failed to send icons to the backend: " + e.getMessage(), e);
-                                return;
-                            }
+
+                            postError("Failed to send icons to the backend: " + e.getMessage(), e);
+                            return;
                         }
                         PerfUtil.end();
                     }
 
-                    final boolean fShouldFallback = shouldFallback;
                     post(new Runnable() {
                         @Override
                         public void run() {
-                            if (config == null || fShouldFallback) {
+                            if (config == null) {
                                 // Send email intent
                                 IRLog.log("IconRequestSend", "Launching intent!");
                                 final Uri zipUri = Uri.fromFile(zipFile);
@@ -717,7 +710,7 @@ public final class IconRequest {
                                         .putExtra(Intent.EXTRA_EMAIL, new String[]{mBuilder.mEmail})
                                         .putExtra(Intent.EXTRA_SUBJECT, mBuilder.mSubject)
                                         .putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getBody()))
-                                        .putExtra(Intent.EXTRA_STREAM, zipUri)
+                                        .putExtra(Intent.EXTRA_STREAM, mBuilder.mSendCallback.onRequestProcessUri(zipUri))
                                         .setType("application/zip");
                                 mBuilder.mContext.startActivity(Intent.createChooser(
                                         emailIntent, mBuilder.mContext.getString(R.string.send_using)));

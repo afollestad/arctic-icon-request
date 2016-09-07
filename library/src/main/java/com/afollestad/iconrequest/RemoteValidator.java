@@ -10,7 +10,7 @@ import org.json.JSONObject;
 /**
  * @author Aidan Follestad (afollestad)
  */
-class BackendValidator extends ResponseValidator {
+class RemoteValidator extends ResponseValidator {
 
     @SuppressWarnings("ConstantConditions")
     @Override

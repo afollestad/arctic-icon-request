@@ -18,7 +18,6 @@ import com.afollestad.assent.PermissionResultSet;
 import com.afollestad.iconrequest.App;
 import com.afollestad.iconrequest.AppsLoadCallback;
 import com.afollestad.iconrequest.AppsSelectionListener;
-import com.afollestad.iconrequest.BackendConfig;
 import com.afollestad.iconrequest.IconRequest;
 import com.afollestad.iconrequest.RequestSendCallback;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -88,7 +87,7 @@ public class MainActivity extends AssentActivity implements AppsLoadCallback, Re
                     .includeDeviceInfo(true) // defaults to true anyways
                     .generateAppFilterXml(true) // defaults to true anyways
                     .generateAppFilterJson(true)
-//                    .remoteConfig(new BackendConfig("http://remoteserver.com:3000", "10b11a80-e991-11e5-9dd9-5936aa169767"))
+//                    .remoteConfig(new RemoteConfig("http://remoteserver.com:3000", "10b11a80-e991-11e5-9dd9-5936aa169767"))
                     .loadCallback(this)
                     .sendCallback(this)
                     .selectionCallback(this)
