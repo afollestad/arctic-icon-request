@@ -83,7 +83,7 @@ public final class IconRequest {
 
         public Builder(@NonNull Context context) {
             mContext = context;
-            mSaveDir = new File(context.getCacheDir(), "IconRequest");
+            mSaveDir = new File(context.getExternalCacheDir(), "icon_requests");
             FileUtil.wipe(mSaveDir);
         }
 
@@ -94,11 +94,6 @@ public final class IconRequest {
 
         public Builder filterOff() {
             mFilterName = null;
-            return this;
-        }
-
-        public Builder saveDir(@NonNull File file) {
-            mSaveDir = file;
             return this;
         }
 
@@ -525,7 +520,7 @@ public final class IconRequest {
                 mBuilder.mSubject = "Icon Request";
             }
 
-            if (mBuilder.mSaveDir == null || (mBuilder.mSaveDir.exists() && !mBuilder.mSaveDir.mkdirs())) {
+            if (!mBuilder.mSaveDir.exists() && !mBuilder.mSaveDir.mkdir()) {
                 postError("Unable to create folders: " + (mBuilder.mSaveDir != null ? mBuilder.mSaveDir.getAbsolutePath() : "(null)"), null);
                 return;
             }

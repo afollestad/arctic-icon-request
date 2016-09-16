@@ -84,7 +84,6 @@ public class MainActivity extends AssentActivity implements AppsLoadCallback, Re
                     .withFooter("%s Version: %s", getString(R.string.app_name), BuildConfig.VERSION_NAME)
                     .withSubject("Icon Request - Just a Test")
                     .toEmail("fake-email@fake-website.com")
-                    .saveDir(new File(Environment.getExternalStorageDirectory(), getString(R.string.app_name)))
                     .includeDeviceInfo(true) // defaults to true anyways
                     .generateAppFilterXml(true) // defaults to true anyways
                     .generateAppFilterJson(true)
