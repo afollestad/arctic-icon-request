@@ -525,7 +525,7 @@ public final class IconRequest {
                 mBuilder.mSubject = "Icon Request";
             }
 
-            if (mBuilder.mSaveDir == null || !mBuilder.mSaveDir.mkdirs()) {
+            if (mBuilder.mSaveDir == null || (mBuilder.mSaveDir.exists() && !mBuilder.mSaveDir.mkdirs())) {
                 postError("Unable to create folders: " + (mBuilder.mSaveDir != null ? mBuilder.mSaveDir.getAbsolutePath() : "(null)"), null);
                 return;
             }

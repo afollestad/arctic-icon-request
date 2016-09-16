@@ -3,7 +3,7 @@ apply plugin: 'com.android.library'
 ext {
     PUBLISH_GROUP_ID = 'com.afollestad'
     PUBLISH_ARTIFACT_ID = 'icon-request'
-    PUBLISH_VERSION = '1.5.0'
+    PUBLISH_VERSION = '1.5.1'
     TARGET_SDK = 24
     BUILD_TOOLS = "24.0.1"
     GOOGLE_LIBS = "24.2.0"
@@ -16,7 +16,7 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion TARGET_SDK
-        versionCode 15
+        versionCode 16
         versionName PUBLISH_VERSION
     }
     lintOptions {
