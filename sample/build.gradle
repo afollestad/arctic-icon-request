@@ -1,22 +1,16 @@
 apply plugin: 'com.android.application'
-
-ext {
-    PUBLISH_VERSION = "1.5.2"
-    TARGET_SDK = 24
-    BUILD_TOOLS = "24.0.1"
-    GOOGLE_LIBS = "24.2.0"
-}
+apply from: '../dependencies.gradle'
 
 android {
-    compileSdkVersion TARGET_SDK
-    buildToolsVersion BUILD_TOOLS
+    compileSdkVersion versions.compileSdk
+    buildToolsVersion versions.buildTools
 
     defaultConfig {
         applicationId "com.afollestad.iconrequestsample"
-        minSdkVersion 14
-        targetSdkVersion TARGET_SDK
-        versionCode 17
-        versionName PUBLISH_VERSION
+        minSdkVersion versions.minSdk
+        targetSdkVersion versions.compileSdk
+        versionCode versions.versionCode
+        versionName versions.publishVersion
     }
     lintOptions {
         abortOnError false
@@ -32,15 +26,17 @@ android {
 dependencies {
     compile project(':library')
 
-    compile "com.android.support:appcompat-v7:$GOOGLE_LIBS"
-    compile "com.android.support:recyclerview-v7:$GOOGLE_LIBS"
-    compile "com.android.support:design:$GOOGLE_LIBS"
-    compile "com.android.support:support-v13:$GOOGLE_LIBS"
+    compile 'com.android.support:appcompat-v7:' + versions.supportLib
+    compile 'com.android.support:recyclerview-v7:' + versions.supportLib
+    compile 'com.android.support:design:' + versions.supportLib
+    compile 'com.android.support:support-v13:' + versions.supportLib
 
-    compile 'com.github.bumptech.glide:glide:3.7.0'
+    compile 'com.github.bumptech.glide:glide:' + versions.glide
 
-    compile 'com.afollestad:assent:0.2.5'
-    compile 'com.afollestad.material-dialogs:core:0.9.0.1'
+    compile 'com.afollestad:assent:' + versions.assent
+    compile 'com.afollestad.material-dialogs:core:' + versions.materialDialogs
+    compile 'me.zhanghai.android.materialprogressbar:library:' + versions.materialProgressBar
 
-    compile 'me.zhanghai.android.materialprogressbar:library:1.1.7'
+    compile 'com.jakewharton:butterknife:' + versions.butterKnife
+    annotationProcessor 'com.jakewharton:butterknife-compiler:' + versions.butterKnife
 }
