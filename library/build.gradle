@@ -36,6 +36,9 @@ dependencies {
     annotationProcessor 'com.google.auto.value:auto-value:' + versions.autoValue
     annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:' + versions.autoValueParcel
 
+    compile 'io.reactivex:rxjava:' + versions.rxJava
+    compile 'io.reactivex:rxandroid:' + versions.rxAndroid
+
     provided 'com.github.bumptech.glide:glide:' + versions.glide
     provided 'com.android.support:support-v13:' + versions.supportLib
 }
