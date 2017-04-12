@@ -5,6 +5,8 @@ or through my [Polar Request Manager](https://polar.aidanfollestad.com) system.
 
 This library uses RxJava, so it is completely asynchronous, and flows are customizable.
 
+![Showcase](https://raw.githubusercontent.com/afollestad/polar-icon-request/master/art/showcase.png)
+
 ---
 
 # Gradle Dependency
