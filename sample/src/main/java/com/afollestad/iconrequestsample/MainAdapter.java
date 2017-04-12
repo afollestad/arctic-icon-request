@@ -11,6 +11,9 @@ import com.afollestad.iconrequest.AppModel;
 
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 /**
  * @author Aidan Follestad (afollestad)
  */
@@ -42,7 +45,7 @@ class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
     }
   }
 
-  public void setListener(SelectionListener listener) {
+  void setListener(SelectionListener listener) {
     this.listener = listener;
   }
 
@@ -72,14 +75,15 @@ class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
 
   static class MainVH extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-    final ImageView icon;
-    final TextView title;
+    @BindView(R.id.icon)
+    ImageView icon;
+    @BindView(R.id.title)
+    TextView title;
     final MainAdapter adapter;
 
     MainVH(View itemView, MainAdapter adapter) {
       super(itemView);
-      icon = (ImageView) itemView.findViewById(R.id.icon);
-      title = (TextView) itemView.findViewById(R.id.title);
+      ButterKnife.bind(this, itemView);
       this.adapter = adapter;
       itemView.setOnClickListener(this);
     }

@@ -82,6 +82,21 @@ public class PolarRequest {
     return this;
   }
 
+  private static void transferStates(List<AppModel> from, List<AppModel> to) {
+    Observable.from(from)
+        .filter(AppModel::selected)
+        .forEach(appModel -> {
+          for (int i = 0; i < to.size(); i++) {
+            AppModel current = to.get(i);
+            if (appModel.code().equals(current.code())) {
+              to.set(i, current.withSelectedAndRequested(
+                  appModel.selected(), appModel.requested()));
+              break;
+            }
+          }
+        });
+  }
+
   @NonNull
   public Observable<LoadResult> load() {
     return Observable.fromCallable(() -> {
@@ -91,7 +106,11 @@ public class PolarRequest {
       } catch (Exception e) {
         return LoadResult.create(e);
       }
-      loadedApps = componentInfoSource.getInstalledApps(loadedFilter);
+      List<AppModel> newLoadedApps = componentInfoSource.getInstalledApps(loadedFilter);
+      if (!loadedApps.isEmpty()) {
+        transferStates(loadedApps, newLoadedApps);
+      }
+      loadedApps = newLoadedApps;
       return LoadResult.create(loadedApps);
     }).observeOn(AndroidSchedulers.mainThread())
         .subscribeOn(Schedulers.computation())
@@ -192,8 +211,8 @@ public class PolarRequest {
       }
       app = app.withSelected(true);
       loadedApps.set(i, app);
-      selectionChangeSubject.onNext(app);
     }
+    loadedSubject.onNext(LoadResult.create(loadedApps));
     return this;
   }
 
@@ -206,8 +225,8 @@ public class PolarRequest {
       }
       app = app.withSelected(false);
       loadedApps.set(i, app);
-      selectionChangeSubject.onNext(app);
     }
+    loadedSubject.onNext(LoadResult.create(loadedApps));
     return this;
   }
 
@@ -219,8 +238,8 @@ public class PolarRequest {
       }
       app = app.withSelected(false).withRequested(true);
       loadedApps.set(i, app);
-      selectionChangeSubject.onNext(app);
     }
+    loadedSubject.onNext(LoadResult.create(loadedApps));
   }
 
   @NonNull

@@ -85,14 +85,13 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
         .subscribe(loadResult -> {
           if (!loadResult.success()) {
             adapter.setAppsList(null);
-            dialog = new MaterialDialog.Builder(this)
-                .title(R.string.error)
-                .content(loadResult.error().getMessage())
-                .positiveText(android.R.string.ok)
-                .show();
+            Snackbar.make(rootView,
+                loadResult.error().getMessage(),
+                Snackbar.LENGTH_LONG).show();
             return;
           }
           adapter.setAppsList(loadResult.apps());
+          invalidateToolbar();
         });
     request.selectionChange()
         .subscribe(appModel -> {
@@ -114,24 +113,20 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
         });
     request.sent()
         .subscribe(sendResult -> {
-          if (dialog != null) {
-            dialog.dismiss();
-          }
           if (!sendResult.success()) {
-            dialog = new MaterialDialog.Builder(this)
-                .title(R.string.error)
-                .content(sendResult.error().getMessage())
-                .positiveText(android.R.string.ok)
-                .show();
+            Snackbar.make(rootView,
+                sendResult.error().getMessage(),
+                Snackbar.LENGTH_LONG).show();
           } else {
             Snackbar.make(rootView, R.string.request_sent, Snackbar.LENGTH_SHORT).show();
           }
         });
+  }
 
-    if (request.getLoadedApps().isEmpty()) {
-      request.load()
-          .subscribe();
-    }
+  @Override
+  protected void onResume() {
+    super.onResume();
+    request.load().subscribe();
   }
 
   private void invalidateToolbar() {

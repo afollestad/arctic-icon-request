@@ -39,6 +39,8 @@ public abstract class AppModel implements Parcelable, Serializable {
 
   public abstract AppModel withRequested(boolean requested);
 
+  public abstract AppModel withSelectedAndRequested(boolean selected, boolean requested);
+
   public Drawable getIcon(Context context) {
     final ApplicationInfo ai = getAppInfo(context);
     if (ai == null) {
