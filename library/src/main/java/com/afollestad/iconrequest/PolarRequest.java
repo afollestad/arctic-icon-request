@@ -19,6 +19,10 @@ import rx.subjects.PublishSubject;
 @SuppressWarnings("WeakerAccess")
 public class PolarRequest {
 
+  private final static String KEY_CONFIG = "ir.config";
+  private final static String KEY_FILTER = "ir.loadedFilter";
+  private final static String KEY_APPS = "ir.loadedApps";
+
   private final PublishSubject<Boolean> loadingSubject;
   private final PublishSubject<LoadResult> loadedSubject;
   private final PublishSubject<Boolean> sendingSubject;
@@ -53,7 +57,7 @@ public class PolarRequest {
   @NonNull
   public static PolarRequest make(@NonNull Context context, @Nullable Bundle savedInstanceState) {
     return new PolarRequest(context)
-        .restoreInstance(savedInstanceState);
+        .restoreInstance(context, savedInstanceState);
   }
 
   public PolarRequest config(@NonNull PolarConfig config) {
@@ -61,11 +65,20 @@ public class PolarRequest {
     return this;
   }
 
-  private PolarRequest restoreInstance(@Nullable Bundle savedInstanceState) {
+  private PolarRequest restoreInstance(@NonNull Context context, @Nullable Bundle savedInstanceState) {
     if (savedInstanceState == null) {
       return this;
     }
-    // TODO
+    config = savedInstanceState.getParcelable(KEY_CONFIG);
+    if (config == null) {
+      config = PolarConfig.create(context).build();
+    }
+    //noinspection unchecked
+    loadedFilter = (HashSet<String>) savedInstanceState.getSerializable(KEY_FILTER);
+    if (loadedFilter == null) {
+      loadedFilter = new HashSet<>(0);
+    }
+    loadedApps = savedInstanceState.getParcelableArrayList(KEY_APPS);
     return this;
   }
 
@@ -73,7 +86,9 @@ public class PolarRequest {
     if (out == null) {
       return;
     }
-// TODO
+    out.putParcelable(KEY_CONFIG, config);
+    out.putSerializable(KEY_FILTER, loadedFilter);
+    out.putParcelableArrayList(KEY_APPS, (ArrayList<AppModel>) loadedApps);
   }
 
   @NonNull
