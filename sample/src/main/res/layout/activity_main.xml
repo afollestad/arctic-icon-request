@@ -1,56 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:id="@+id/rootView"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical">
+
+  <android.support.v7.widget.Toolbar
+    android:id="@+id/toolbar"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="?actionBarSize"
+    android:background="?colorPrimary"
+    android:elevation="@dimen/toolbar_elevation"
+    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+    app:title="@string/app_name"
+    tools:ignore="UnusedAttribute"/>
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?actionBarSize"
-        android:background="?colorPrimary"
-        android:elevation="@dimen/toolbar_elevation"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:title="@string/app_name"
-        tools:ignore="UnusedAttribute" />
+  <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+               xmlns:tools="http://schemas.android.com/tools"
+               android:layout_width="match_parent"
+               android:layout_height="match_parent">
 
-    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <android.support.v7.widget.RecyclerView
+      android:id="@+id/list"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:descendantFocusability="blocksDescendants"
+      android:scrollbars="vertical"/>
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:descendantFocusability="blocksDescendants"
-            android:scrollbars="vertical" />
+    <TextView
+      android:id="@+id/progress"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:fontFamily="sans-serif-light"
+      android:gravity="center"
+      android:padding="@dimen/content_inset"
+      android:textSize="24sp"
+      android:textStyle="italic"
+      tools:ignore="UnusedAttribute"
+      tools:text="Loading... 100%"/>
 
-        <TextView
-            android:id="@+id/progress"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fontFamily="sans-serif-light"
-            android:gravity="center"
-            android:padding="@dimen/content_inset"
-            android:textSize="24sp"
-            android:textStyle="italic"
-            tools:ignore="UnusedAttribute"
-            tools:text="Loading... 100%" />
+    <android.support.design.widget.FloatingActionButton
+      android:id="@+id/fab"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="bottom|right|end"
+      android:layout_marginBottom="@dimen/content_inset"
+      android:layout_marginEnd="@dimen/content_inset"
+      android:layout_marginRight="@dimen/content_inset"
+      android:src="@drawable/ic_action_send"
+      tools:ignore="RtlHardcoded"/>
 
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/fab"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|right|end"
-            android:layout_marginBottom="@dimen/content_inset"
-            android:layout_marginEnd="@dimen/content_inset"
-            android:layout_marginRight="@dimen/content_inset"
-            android:src="@drawable/ic_action_send"
-            tools:ignore="RtlHardcoded" />
-
-    </FrameLayout>
+  </FrameLayout>
 
 </LinearLayout>

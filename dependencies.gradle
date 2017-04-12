@@ -6,11 +6,13 @@ ext.versions = [
 
         buildTools:          '25.0.2',
         gradlePlugin:        '2.2.0',
+        retroLambda:         '3.6.0',
 
         supportLib:          '25.3.1',
         bridge:              '5.1.2',
         autoValue:           '1.3',
         autoValueParcel:     '0.2.5',
+        autoValueWith:       '1.0.0',
         rxJava:              '1.2.9',
         rxAndroid:           '1.2.1',
 

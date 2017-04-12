@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply from: '../dependencies.gradle'
+apply plugin: 'me.tatarka.retrolambda'
 
 ext {
     PUBLISH_GROUP_ID = 'com.afollestad'
@@ -26,6 +27,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -35,6 +40,7 @@ dependencies {
     compile 'com.google.auto.value:auto-value:' + versions.autoValue
     annotationProcessor 'com.google.auto.value:auto-value:' + versions.autoValue
     annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:' + versions.autoValueParcel
+    annotationProcessor 'com.gabrielittner.auto.value:auto-value-with:' + versions.autoValueWith
 
     compile 'io.reactivex:rxjava:' + versions.rxJava
     compile 'io.reactivex:rxandroid:' + versions.rxAndroid

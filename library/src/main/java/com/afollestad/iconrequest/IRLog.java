@@ -9,13 +9,10 @@ import android.util.Log;
  */
 class IRLog {
 
-    public static void log(@Nullable String tag, @NonNull String msg, @Nullable Object... args) {
-        if(tag == null) tag = "IconRequest";
-        if (args != null)
-            msg = String.format(msg, args);
-        Log.d(tag, msg);
-    }
-
-    private IRLog() {
-    }
+  static void log(@Nullable String tag, @NonNull String msg, @Nullable Object... args) {
+    if (tag == null) tag = "IconRequest";
+    if (args != null)
+      msg = String.format(msg, args);
+    Log.d(tag, msg);
+  }
 }

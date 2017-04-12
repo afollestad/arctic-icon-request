@@ -12,29 +12,26 @@ import java.util.zip.ZipOutputStream;
  */
 class ZipUtil {
 
-    public static void zip(File zipFile, File... files) throws Exception {
-        ZipOutputStream out = null;
-        InputStream is = null;
-        try {
-            out = new ZipOutputStream(new FileOutputStream(zipFile));
-            for (File fi : files) {
-                out.putNextEntry(new ZipEntry(fi.getName()));
-                is = new FileInputStream(fi);
+  static void zip(File zipFile, File... files) throws Exception {
+    ZipOutputStream out = null;
+    InputStream is = null;
+    try {
+      out = new ZipOutputStream(new FileOutputStream(zipFile));
+      for (File fi : files) {
+        out.putNextEntry(new ZipEntry(fi.getName()));
+        is = new FileInputStream(fi);
 
-                int read;
-                byte[] buffer = new byte[2048];
-                while ((read = is.read(buffer)) != -1)
-                    out.write(buffer, 0, read);
+        int read;
+        byte[] buffer = new byte[2048];
+        while ((read = is.read(buffer)) != -1)
+          out.write(buffer, 0, read);
 
-                FileUtil.closeQuietely(is);
-                out.closeEntry();
-            }
-        } finally {
-            FileUtil.closeQuietely(is);
-            FileUtil.closeQuietely(out);
-        }
+        FileUtil.closeQuietely(is);
+        out.closeEntry();
+      }
+    } finally {
+      FileUtil.closeQuietely(is);
+      FileUtil.closeQuietely(out);
     }
-
-    private ZipUtil() {
-    }
+  }
 }

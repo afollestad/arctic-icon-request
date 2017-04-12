@@ -1,212 +1,191 @@
 package com.afollestad.iconrequestsample;
 
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.afollestad.assent.Assent;
 import com.afollestad.assent.AssentActivity;
-import com.afollestad.assent.AssentCallback;
-import com.afollestad.assent.PermissionResultSet;
-import com.afollestad.iconrequest.App;
-import com.afollestad.iconrequest.AppsLoadCallback;
-import com.afollestad.iconrequest.AppsSelectionListener;
-import com.afollestad.iconrequest.IconRequest;
-import com.afollestad.iconrequest.RequestSendCallback;
+import com.afollestad.iconrequest.PolarRequest;
 import com.afollestad.materialdialogs.MaterialDialog;
 
-import java.io.File;
-import java.util.ArrayList;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.Unbinder;
+import rx.schedulers.Schedulers;
 
-public class MainActivity extends AssentActivity implements AppsLoadCallback, RequestSendCallback, AppsSelectionListener, Toolbar.OnMenuItemClickListener {
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 
-    private TextView mProgress;
-    private MainAdapter mAdapter;
-    private FloatingActionButton mFab;
-    private Toolbar mToolbar;
+public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemClickListener {
 
-    private MaterialDialog mDialog;
+  @BindView(R.id.rootView)
+  TextView rootView;
+  @BindView(R.id.progress)
+  TextView progressView;
+  @BindView(R.id.fab)
+  FloatingActionButton fabView;
+  @BindView(R.id.toolbar)
+  Toolbar toolbar;
+  @BindView(R.id.list)
+  RecyclerView listView;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+  private PolarRequest request;
+  private Unbinder unbinder;
+  private MainAdapter adapter;
+  private MaterialDialog dialog;
 
-        mProgress = (TextView) findViewById(R.id.progress);
-        mFab = (FloatingActionButton) findViewById(R.id.fab);
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    unbinder = ButterKnife.bind(this);
 
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        mToolbar.inflateMenu(R.menu.menu_main);
-        mToolbar.setOnMenuItemClickListener(this);
+    toolbar.inflateMenu(R.menu.menu_main);
+    toolbar.setOnMenuItemClickListener(this);
 
-        mFab.hide();
-        mFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (!Assent.isPermissionGranted(Assent.WRITE_EXTERNAL_STORAGE)) {
-                    Assent.requestPermissions(new AssentCallback() {
-                        @Override
-                        public void onPermissionResult(PermissionResultSet results) {
-                            if (results.allPermissionsGranted())
-                                IconRequest.get().send();
-                            else
-                                Toast.makeText(MainActivity.this, R.string.permission_denied, Toast.LENGTH_LONG).show();
-                        }
-                    }, 69, Assent.WRITE_EXTERNAL_STORAGE);
-                    return;
-                }
-                IconRequest.get().send();
-            }
-        });
+    fabView.hide();
+    fabView.setOnClickListener(view -> {
+      if (!Assent.isPermissionGranted(Assent.WRITE_EXTERNAL_STORAGE)) {
+        Assent.requestPermissions(results -> {
+          if (results.allPermissionsGranted()) {
+            request.send()
+                .subscribeOn(Schedulers.computation())
+                .subscribe();
+          } else {
+            Snackbar.make(rootView,
+                R.string.permission_denied,
+                Snackbar.LENGTH_LONG).show();
+          }
+        }, 69, Assent.WRITE_EXTERNAL_STORAGE);
+        return;
+      }
+      request.send()
+          .subscribeOn(Schedulers.computation())
+          .subscribe();
+    });
 
-        RecyclerView list = (RecyclerView) findViewById(R.id.list);
-        GridLayoutManager lm = new GridLayoutManager(this, getResources().getInteger(R.integer.grid_width));
-        list.setLayoutManager(lm);
+    GridLayoutManager lm = new GridLayoutManager(this, getResources().getInteger(R.integer.grid_width));
+    listView.setLayoutManager(lm);
+    adapter = new MainAdapter();
+    listView.setAdapter(adapter);
 
-        mAdapter = new MainAdapter();
-        list.setAdapter(mAdapter);
-
-        if (savedInstanceState != null)
-            IconRequest.restoreInstanceState(this, savedInstanceState, this, this, this);
-
-        // Only load if it wasn't saved before a configuration change
-        if (IconRequest.get() == null) {
-            IconRequest request = IconRequest.start(this)
-                    .withHeader("Hey, testing Icon Request!")
-                    .withFooter("%s Version: %s", getString(R.string.app_name), BuildConfig.VERSION_NAME)
-                    .withSubject("Icon Request - Just a Test")
-                    .toEmail("fake-email@fake-website.com")
-                    .includeDeviceInfo(true) // defaults to true anyways
-                    .generateAppFilterXml(true) // defaults to true anyways
-                    .generateAppFilterJson(true)
-//                    .remoteConfig(new RemoteConfig("http://remoteserver.com:3000", "10b11a80-e991-11e5-9dd9-5936aa169767"))
-                    .loadCallback(this)
-                    .sendCallback(this)
-                    .selectionCallback(this)
-                    .build();
-            request.loadApps();
-        }
-    }
-
-    @Override
-    public void onLoadingFilter() {
-        mProgress.setVisibility(View.VISIBLE);
-        mProgress.setText(R.string.loading_filter);
-    }
-
-    @Override
-    public void onAppsLoaded(ArrayList<App> apps, Exception error) {
-        if (error != null) {
-            mProgress.setVisibility(View.VISIBLE);
-            mProgress.setText(error.getMessage());
-            mDialog = new MaterialDialog.Builder(this)
-                    .title(R.string.error)
-                    .content(error.getMessage())
-                    .positiveText(android.R.string.ok)
-                    .show();
+    request = PolarRequest.make(this, savedInstanceState);
+    request.loading()
+        .subscribeOn(Schedulers.computation())
+        .subscribe(isLoading -> progressView.setVisibility(isLoading ? VISIBLE : GONE));
+    request.loaded()
+        .subscribeOn(Schedulers.computation())
+        .subscribe(loadResult -> {
+          if (!loadResult.success()) {
+            adapter.setAppsList(null);
+            dialog = new MaterialDialog.Builder(this)
+                .title(R.string.error)
+                .content(loadResult.error().getMessage())
+                .positiveText(android.R.string.ok)
+                .show();
             return;
-        }
-        mProgress.setVisibility(View.GONE);
-        mAdapter.notifyDataSetChanged();
-    }
-
-    @Override
-    public void onAppsLoadProgress(int percent) {
-        mProgress.setVisibility(View.VISIBLE);
-        mProgress.setText(getString(R.string.loading_percent, percent));
-    }
-
-    @Override
-    public void onRequestPreparing() {
-        mDialog = new MaterialDialog.Builder(this)
+          }
+          adapter.setAppsList(loadResult.apps());
+        });
+    request.selectionChange()
+        .subscribeOn(Schedulers.computation())
+        .subscribe(appModel -> {
+          adapter.update(appModel);
+          invalidateToolbar();
+        });
+    request.sending()
+        .subscribeOn(Schedulers.computation())
+        .subscribe(isSending -> {
+          if (isSending) {
+            dialog = new MaterialDialog.Builder(this)
                 .content(R.string.preparing_your_request)
                 .progress(true, -1)
                 .cancelable(false)
                 .canceledOnTouchOutside(false)
                 .show();
-    }
-
-    @Override
-    public void onRequestError(Exception e) {
-        if (mDialog != null)
-            mDialog.dismiss();
-        mDialog = new MaterialDialog.Builder(this)
+          } else if (dialog != null) {
+            dialog.dismiss();
+          }
+        });
+    request.sent()
+        .subscribeOn(Schedulers.computation())
+        .subscribe(sendResult -> {
+          if (dialog != null) {
+            dialog.dismiss();
+          }
+          if (!sendResult.success()) {
+            dialog = new MaterialDialog.Builder(this)
                 .title(R.string.error)
-                .content(e.getMessage())
+                .content(sendResult.error().getMessage())
                 .positiveText(android.R.string.ok)
                 .show();
-        mProgress.setText(e.getMessage());
-    }
+          } else {
+            Snackbar.make(rootView, R.string.request_sent, Snackbar.LENGTH_SHORT).show();
+          }
+        });
 
-    @Override
-    public Uri onRequestProcessUri(Uri uri) {
-        return uri;
+    if (request.getLoadedApps().isEmpty()) {
+      request.load()
+          .subscribeOn(Schedulers.computation())
+          .subscribe();
     }
+  }
 
-    @Override
-    public void onRequestSent() {
-        if (mDialog != null)
-            mDialog.dismiss();
-        Toast.makeText(this, R.string.request_sent, Toast.LENGTH_SHORT).show();
-        IconRequest.get().unselectAllApps();
-        mAdapter.notifyDataSetChanged();
+  private void invalidateToolbar() {
+    int selectedCount = request.getSelectedApps().size();
+    if (selectedCount == 0) {
+      fabView.hide();
+      toolbar.setTitle(R.string.app_name);
+      toolbar.getMenu().findItem(R.id.selectAllNone)
+          .setIcon(R.drawable.ic_action_selectall);
+    } else {
+      fabView.show();
+      toolbar.setTitle(getString(R.string.app_name_x, selectedCount));
+      toolbar.getMenu().findItem(R.id.selectAllNone)
+          .setIcon(R.drawable.ic_action_selectall);
     }
+  }
 
-    @Override
-    public void onAppSelectionChanged(int selectedCount) {
-        if (selectedCount == 0) {
-            mFab.hide();
-            mToolbar.setTitle(R.string.app_name);
-            mToolbar.getMenu().findItem(R.id.selectAllNone)
-                    .setIcon(R.drawable.ic_action_selectall);
-        } else {
-            mFab.show();
-            mToolbar.setTitle(getString(R.string.app_name_x, selectedCount));
-            mToolbar.getMenu().findItem(R.id.selectAllNone)
-                    .setIcon(R.drawable.ic_action_selectall);
-        }
-    }
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    request.saveInstance(outState);
+    super.onSaveInstanceState(outState);
+  }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (mDialog != null) {
-            mDialog.dismiss();
-            mDialog = null;
-        }
-        if (isFinishing())
-            IconRequest.cleanup();
-    }
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    unbinder.unbind();
+    request = null;
+  }
 
-    @Override
-    public boolean onMenuItemClick(MenuItem item) {
-        if (item.getItemId() == R.id.selectAllNone) {
-            IconRequest ir = IconRequest.get();
-            if (ir.getSelectedApps().size() > 0) {
-                ir.unselectAllApps();
-                item.setIcon(R.drawable.ic_action_selectall);
-                mAdapter.notifyDataSetChanged();
-            } else {
-                ir.selectAllApps();
-                item.setIcon(R.drawable.ic_action_selectnone);
-                mAdapter.notifyDataSetChanged();
-            }
-            return true;
-        }
-        return false;
+  @Override
+  protected void onPause() {
+    super.onPause();
+    if (dialog != null) {
+      dialog.dismiss();
+      dialog = null;
     }
+  }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        IconRequest.saveInstanceState(outState);
+  @Override
+  public boolean onMenuItemClick(MenuItem item) {
+    if (item.getItemId() == R.id.selectAllNone) {
+      if (!request.getSelectedApps().isEmpty()) {
+        request.deselectAll();
+        item.setIcon(R.drawable.ic_action_selectall);
+      } else {
+        request.selectAll();
+        item.setIcon(R.drawable.ic_action_selectnone);
+      }
+      return true;
     }
+    return false;
+  }
 }
