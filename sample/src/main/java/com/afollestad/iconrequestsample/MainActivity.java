@@ -7,6 +7,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 
 import com.afollestad.assent.Assent;
@@ -25,7 +26,7 @@ import static android.view.View.VISIBLE;
 public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemClickListener {
 
   @BindView(R.id.rootView)
-  TextView rootView;
+  View rootView;
   @BindView(R.id.progress)
   TextView progressView;
   @BindView(R.id.fab)
@@ -70,17 +71,17 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
           .subscribe();
     });
 
+    adapter = new MainAdapter();
+    adapter.setListener((index, app) -> request.toggleSelection(app));
+
     GridLayoutManager lm = new GridLayoutManager(this, getResources().getInteger(R.integer.grid_width));
     listView.setLayoutManager(lm);
-    adapter = new MainAdapter();
     listView.setAdapter(adapter);
 
     request = PolarRequest.make(this, savedInstanceState);
     request.loading()
-        .subscribeOn(Schedulers.computation())
         .subscribe(isLoading -> progressView.setVisibility(isLoading ? VISIBLE : GONE));
     request.loaded()
-        .subscribeOn(Schedulers.computation())
         .subscribe(loadResult -> {
           if (!loadResult.success()) {
             adapter.setAppsList(null);
@@ -94,13 +95,11 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
           adapter.setAppsList(loadResult.apps());
         });
     request.selectionChange()
-        .subscribeOn(Schedulers.computation())
         .subscribe(appModel -> {
           adapter.update(appModel);
           invalidateToolbar();
         });
     request.sending()
-        .subscribeOn(Schedulers.computation())
         .subscribe(isSending -> {
           if (isSending) {
             dialog = new MaterialDialog.Builder(this)
@@ -114,7 +113,6 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
           }
         });
     request.sent()
-        .subscribeOn(Schedulers.computation())
         .subscribe(sendResult -> {
           if (dialog != null) {
             dialog.dismiss();
@@ -132,7 +130,6 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
 
     if (request.getLoadedApps().isEmpty()) {
       request.load()
-          .subscribeOn(Schedulers.computation())
           .subscribe();
     }
   }

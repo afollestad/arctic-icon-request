@@ -20,7 +20,7 @@ public abstract class SendResult {
   public abstract boolean usedPolarRm();
 
   public boolean success() {
-    return error() != null;
+    return error() == null;
   }
 
   @Nullable

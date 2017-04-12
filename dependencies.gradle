@@ -16,7 +16,7 @@ ext.versions = [
         rxJava:              '1.2.9',
         rxAndroid:           '1.2.1',
 
-        materialDialogs:     '0.9.4.2',
+        materialDialogs:     '0.9.4.3',
         materialProgressBar: '1.4.0',
         butterKnife:         '8.5.1',
         glide:               '3.7.0',

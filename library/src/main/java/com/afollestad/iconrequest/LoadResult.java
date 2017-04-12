@@ -20,7 +20,7 @@ public abstract class LoadResult implements Parcelable {
   }
 
   public boolean success() {
-    return error() != null;
+    return error() == null;
   }
 
   public abstract List<AppModel> apps();

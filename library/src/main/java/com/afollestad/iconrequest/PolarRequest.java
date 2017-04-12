@@ -11,7 +11,9 @@ import java.util.HashSet;
 import java.util.List;
 
 import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
 @SuppressWarnings("WeakerAccess")
@@ -91,10 +93,12 @@ public class PolarRequest {
       }
       loadedApps = componentInfoSource.getInstalledApps(loadedFilter);
       return LoadResult.create(loadedApps);
-    }).doOnNext(loadResult -> {
-      loadingSubject.onNext(false);
-      loadedSubject.onNext(loadResult);
-    });
+    }).observeOn(AndroidSchedulers.mainThread())
+        .subscribeOn(Schedulers.computation())
+        .doOnNext(loadResult -> {
+          loadingSubject.onNext(false);
+          loadedSubject.onNext(loadResult);
+        });
   }
 
   @NonNull
@@ -230,35 +234,47 @@ public class PolarRequest {
       } catch (Exception e) {
         return SendResult.create(e);
       }
-    }).doOnNext(sendResult -> {
-      resetSelection();
-      sendingSubject.onNext(false);
-      sentSubject.onNext(sendResult);
-    });
+    }).observeOn(AndroidSchedulers.mainThread())
+        .subscribeOn(Schedulers.computation())
+        .doOnNext(sendResult -> {
+          resetSelection();
+          sendingSubject.onNext(false);
+          sentSubject.onNext(sendResult);
+        });
   }
 
   @NonNull
   public Observable<Boolean> loading() {
-    return loadingSubject.asObservable();
+    return loadingSubject.asObservable()
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribeOn(Schedulers.computation());
   }
 
   @NonNull
   public Observable<LoadResult> loaded() {
-    return loadedSubject.asObservable();
+    return loadedSubject.asObservable()
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribeOn(Schedulers.computation());
   }
 
   @NonNull
   public Observable<Boolean> sending() {
-    return sendingSubject.asObservable();
+    return sendingSubject.asObservable()
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribeOn(Schedulers.computation());
   }
 
   @NonNull
   public Observable<SendResult> sent() {
-    return sentSubject.asObservable();
+    return sentSubject.asObservable()
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribeOn(Schedulers.computation());
   }
 
   @NonNull
   public Observable<AppModel> selectionChange() {
-    return selectionChangeSubject.asObservable();
+    return selectionChangeSubject.asObservable()
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribeOn(Schedulers.computation());
   }
 }
