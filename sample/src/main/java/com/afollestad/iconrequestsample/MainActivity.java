@@ -1,8 +1,10 @@
 package com.afollestad.iconrequestsample;
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.FileProvider;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -12,13 +14,16 @@ import android.widget.TextView;
 
 import com.afollestad.assent.Assent;
 import com.afollestad.assent.AssentActivity;
+import com.afollestad.iconrequest.PolarConfig;
 import com.afollestad.iconrequest.PolarRequest;
 import com.afollestad.materialdialogs.MaterialDialog;
 
+import java.io.File;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import butterknife.Unbinder;
-import rx.schedulers.Schedulers;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -41,35 +46,32 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
   private MainAdapter adapter;
   private MaterialDialog dialog;
 
+  @OnClick(R.id.fab)
+  public void onClickFab() {
+    if (!Assent.isPermissionGranted(Assent.WRITE_EXTERNAL_STORAGE)) {
+      Assent.requestPermissions(results -> {
+        if (results.allPermissionsGranted()) {
+          request.send().subscribe();
+        } else {
+          Snackbar.make(rootView,
+              R.string.permission_denied,
+              Snackbar.LENGTH_LONG).show();
+        }
+      }, 69, Assent.WRITE_EXTERNAL_STORAGE);
+      return;
+    }
+    request.send().subscribe();
+  }
+
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     unbinder = ButterKnife.bind(this);
 
     toolbar.inflateMenu(R.menu.menu_main);
     toolbar.setOnMenuItemClickListener(this);
-
     fabView.hide();
-    fabView.setOnClickListener(view -> {
-      if (!Assent.isPermissionGranted(Assent.WRITE_EXTERNAL_STORAGE)) {
-        Assent.requestPermissions(results -> {
-          if (results.allPermissionsGranted()) {
-            request.send()
-                .subscribeOn(Schedulers.computation())
-                .subscribe();
-          } else {
-            Snackbar.make(rootView,
-                R.string.permission_denied,
-                Snackbar.LENGTH_LONG).show();
-          }
-        }, 69, Assent.WRITE_EXTERNAL_STORAGE);
-        return;
-      }
-      request.send()
-          .subscribeOn(Schedulers.computation())
-          .subscribe();
-    });
 
     adapter = new MainAdapter();
     adapter.setListener((index, app) -> request.toggleSelection(app));
@@ -78,13 +80,22 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
     listView.setLayoutManager(lm);
     listView.setAdapter(adapter);
 
-    request = PolarRequest.make(this, savedInstanceState);
+    PolarConfig config = PolarConfig.create(this)
+        .emailRecipient("fake-email@helloworld.com")
+        .build();
+    request = PolarRequest.make(this, savedInstanceState)
+        .config(config)
+        .uriTransformer(uri -> FileProvider.getUriForFile(this,
+            BuildConfig.APPLICATION_ID + ".fileProvider",
+            new File(uri.getPath())));
+
     request.loading()
         .subscribe(isLoading -> progressView.setVisibility(isLoading ? VISIBLE : GONE));
     request.loaded()
         .subscribe(loadResult -> {
           if (!loadResult.success()) {
             adapter.setAppsList(null);
+            loadResult.error().printStackTrace();
             Snackbar.make(rootView,
                 loadResult.error().getMessage(),
                 Snackbar.LENGTH_LONG).show();
@@ -114,6 +125,7 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
     request.sent()
         .subscribe(sendResult -> {
           if (!sendResult.success()) {
+            sendResult.error().printStackTrace();
             Snackbar.make(rootView,
                 sendResult.error().getMessage(),
                 Snackbar.LENGTH_LONG).show();

@@ -43,12 +43,12 @@ class RealSendInteractor implements SendInteractor {
     log(TAG, "Preparing your request to send...");
     if (selectedApps.size() == 0) {
       throw new Exception("No apps were selected to send.");
-    } else if (isEmpty(config.emailRecipient()) && config.apiKey() == null) {
+    } else if (isEmpty(config.emailRecipient()) && isEmpty(config.apiKey())) {
       throw new Exception("You must either specify a recipient email or a request manager API key.");
     }
 
     final File cacheFolder = new File(config.cacheFolder());
-    if (!cacheFolder.exists() || cacheFolder.mkdir()) {
+    if (!cacheFolder.exists() && !cacheFolder.mkdirs()) {
       throw new Exception("Unable to find or create cache folder: " + cacheFolder.getAbsolutePath());
     }
 
@@ -155,7 +155,7 @@ class RealSendInteractor implements SendInteractor {
         String.format("IconRequest-%s.zip", df.format(new Date())));
     try {
       zip(zipFile, filesToZip.toArray(new File[filesToZip.size()]));
-      log("IconRequestSend", "ZIP created at " + zipFile.getAbsolutePath());
+      log(TAG, "ZIP created at " + zipFile.getAbsolutePath());
     } catch (final Exception e) {
       throw new Exception("Failed to create the request ZIP file: " + e.getMessage(), e);
     }
@@ -197,11 +197,15 @@ class RealSendInteractor implements SendInteractor {
       // Send email intent
       log(TAG, "Launching intent!");
       final Uri zipUri = Uri.fromFile(zipFile);
+      final Uri newUri = request.uriTransformer.call(zipUri);
+      if (!zipUri.toString().equals(newUri.toString())) {
+        log(TAG, "Transformed URI %s -> %s", zipUri.toString(), newUri.toString());
+      }
       final Intent emailIntent = new Intent(Intent.ACTION_SEND)
           .putExtra(Intent.EXTRA_EMAIL, new String[]{config.emailRecipient()})
           .putExtra(Intent.EXTRA_SUBJECT, config.emailSubject())
           .putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getEmailBody(selectedApps, config)))
-          .putExtra(Intent.EXTRA_STREAM, request.uriTransformer.call(zipUri))
+          .putExtra(Intent.EXTRA_STREAM, newUri)
           .setType("application/zip");
       context.startActivity(Intent.createChooser(
           emailIntent, context.getString(R.string.send_using)));
