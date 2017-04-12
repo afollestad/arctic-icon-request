@@ -3,6 +3,6 @@
   <dimen name="content_inset_half">8dp</dimen>
   <dimen name="content_inset">16dp</dimen>
   <dimen name="icon_size">72dp</dimen>
-  <dimen name="toolbar_elevation">12dp</dimen>
+  <dimen name="toolbar_elevation">6dp</dimen>
 
 </resources>

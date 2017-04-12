@@ -10,7 +10,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
 
 import com.afollestad.assent.Assent;
 import com.afollestad.assent.AssentActivity;
@@ -24,6 +23,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
+import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -33,7 +33,7 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
   @BindView(R.id.rootView)
   View rootView;
   @BindView(R.id.progress)
-  TextView progressView;
+  MaterialProgressBar progressView;
   @BindView(R.id.fab)
   FloatingActionButton fabView;
   @BindView(R.id.toolbar)
@@ -138,7 +138,9 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
   @Override
   protected void onResume() {
     super.onResume();
-    request.load().subscribe();
+    if (request.getLoadedApps().isEmpty()) {
+      request.load().subscribe();
+    }
   }
 
   private void invalidateToolbar() {

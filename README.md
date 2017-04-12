@@ -1,7 +1,9 @@
 # Icon Request
 
-Icon Request is a sleek library designed to help developers create icon requests from icon pack 
-dashboards.
+This library allows icon pack dashboards to easily send icon requests either traditionally via email,
+or through my [Polar Request Manager](https://polar.aidanfollestad.com) system.
+
+This library uses RxJava, so it is completely asynchronous, and flows are customizable.
 
 ---
 
@@ -25,8 +27,7 @@ dependencies {
 
 # Table of Contents
 
-1. [Introduction](https://github.com/afollestad/polar-icon-request#introduction)
-2. [Getting Started](https://github.com/afollestad/polar-icon-request#getting-started)
+1. [Getting Started](https://github.com/afollestad/polar-icon-request#getting-started)
     1. [Instantiate a Request](https://github.com/afollestad/polar-icon-request#instantiating-a-request)
     2. [Configure a Request](https://github.com/afollestad/polar-icon-request#configuring-a-request)
     3. [Load Unthemed Apps](https://github.com/afollestad/polar-icon-request#loading-unthemed-apps)
@@ -38,15 +39,6 @@ dependencies {
     3. [Selection Change](https://github.com/afollestad/polar-icon-request#selection-change)
     4. [Sending](https://github.com/afollestad/polar-icon-request#sending)
     5. [Sent](https://github.com/afollestad/polar-icon-request#sent)
-
----
-
-# Introduction
-
-This library allows icon pack dashboards to easily send icon requests either traditionally via email,
-or through my [Polar Request Manager](https://polar.aidanfollestad.com) system.
-
-This library uses RxJava, so it is completely asynchronous, and flows are customizable.
 
 ---
 
@@ -82,7 +74,7 @@ PolarConfig config = PolarConfig.create(this)
 You can pass an instance of this class to `PolarRequest`:
 
 ```java
-`PolarRequest request = // ...
+PolarRequest request = // ...
 request.config(config);
 ```
 

@@ -14,20 +14,24 @@ import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
-import rx.subjects.PublishSubject;
+import rx.subjects.BehaviorSubject;
+import rx.subjects.SerializedSubject;
+
+import static com.afollestad.iconrequest.IRLog.log;
 
 @SuppressWarnings("WeakerAccess")
 public class PolarRequest {
 
+  private final static String TAG = PolarRequest.class.getSimpleName();
   private final static String KEY_CONFIG = "ir.config";
   private final static String KEY_FILTER = "ir.loadedFilter";
   private final static String KEY_APPS = "ir.loadedApps";
 
-  private final PublishSubject<Boolean> loadingSubject;
-  private final PublishSubject<LoadResult> loadedSubject;
-  private final PublishSubject<Boolean> sendingSubject;
-  private final PublishSubject<SendResult> sentSubject;
-  private final PublishSubject<AppModel> selectionChangeSubject;
+  private final SerializedSubject<Boolean, Boolean> loadingSubject;
+  private final SerializedSubject<LoadResult, LoadResult> loadedSubject;
+  private final SerializedSubject<Boolean, Boolean> sendingSubject;
+  private final SerializedSubject<SendResult, SendResult> sentSubject;
+  private final SerializedSubject<AppModel, AppModel> selectionChangeSubject;
 
   private final AppFilterSource appFilterSource;
   private final ComponentInfoSource componentInfoSource;
@@ -38,11 +42,11 @@ public class PolarRequest {
   private List<AppModel> loadedApps;
 
   private PolarRequest(@NonNull Context context) {
-    this.loadingSubject = PublishSubject.create();
-    this.loadedSubject = PublishSubject.create();
-    this.sendingSubject = PublishSubject.create();
-    this.sentSubject = PublishSubject.create();
-    this.selectionChangeSubject = PublishSubject.create();
+    this.loadingSubject = BehaviorSubject.<Boolean>create().toSerialized();
+    this.loadedSubject = BehaviorSubject.<LoadResult>create().toSerialized();
+    this.sendingSubject = BehaviorSubject.<Boolean>create().toSerialized();
+    this.sentSubject = BehaviorSubject.<SendResult>create().toSerialized();
+    this.selectionChangeSubject = BehaviorSubject.<AppModel>create().toSerialized();
 
     this.appFilterSource = new AppFilterAssets(context);
     this.componentInfoSource = new ComponentInfoPm(context);
@@ -79,6 +83,13 @@ public class PolarRequest {
       loadedFilter = new HashSet<>(0);
     }
     loadedApps = savedInstanceState.getParcelableArrayList(KEY_APPS);
+    if (loadedApps == null) {
+      loadedApps = new ArrayList<>(0);
+    } else if (!loadedApps.isEmpty()) {
+      log(TAG, "Got %d apps from restored instance state.", loadedApps.size());
+      loadedSubject.onNext(LoadResult.create(loadedApps));
+      loadingSubject.onNext(false);
+    }
     return this;
   }
 

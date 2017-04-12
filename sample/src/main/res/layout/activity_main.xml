@@ -16,6 +16,7 @@
     android:elevation="@dimen/toolbar_elevation"
     android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
     app:title="@string/app_name"
+    app:titleTextColor="@android:color/black"
     tools:ignore="UnusedAttribute"/>
 
   <FrameLayout
@@ -33,17 +34,11 @@
       android:padding="@dimen/content_inset_half"
       android:scrollbars="vertical"/>
 
-    <TextView
+    <me.zhanghai.android.materialprogressbar.MaterialProgressBar
       android:id="@+id/progress"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:fontFamily="sans-serif-light"
-      android:gravity="center"
-      android:padding="@dimen/content_inset"
-      android:textSize="24sp"
-      android:textStyle="italic"
-      tools:ignore="UnusedAttribute"
-      tools:text="Loading... 100%"/>
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center"/>
 
     <android.support.design.widget.FloatingActionButton
       android:id="@+id/fab"

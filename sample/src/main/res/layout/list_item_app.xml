@@ -36,6 +36,7 @@
       android:layout_gravity="center_horizontal"
       android:fontFamily="sans-serif-medium"
       android:gravity="center"
+      android:textColor="@android:color/black"
       android:textSize="14sp"
       tools:ignore="UnusedAttribute"
       tools:text="Title"/>
