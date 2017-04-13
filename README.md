@@ -46,7 +46,7 @@ dependencies {
 
 # Getting Started
 
-#### Instantiating a Request
+### Instantiating a Request
 
 To create a new Request object, you use the static `make(Context, Bundle)` method. Generally, you'd 
 want to call this on `onCreate(Bundle)` of an `Activity` or `Fragment`.
@@ -55,7 +55,7 @@ want to call this on `onCreate(Bundle)` of an `Activity` or `Fragment`.
 PolarRequest request = PolarRequest.make(this, savedInstanceState)
 ```
 
-#### Configuring a Request
+### Configuring a Request
 
 Configuration uses a builder class called `PolarConfig`:
 
@@ -80,7 +80,7 @@ PolarRequest request = // ...
 request.config(config);
 ```
 
-#### Loading Unthemed Apps
+### Loading Unthemed Apps
 
 With a configured `PolarRequest` instance, you can load unthemed apps:
 
@@ -97,7 +97,7 @@ request.load()
     });
 ```
 
-#### Selecting Apps
+### Selecting Apps
 
 Once you've loaded apps, you can select/deselect apps that are sent in a request:
 
@@ -112,7 +112,7 @@ request.selectAll();
 request.deselectAll();
 ```
 
-#### Sending a Request
+### Sending a Request
 
 Once you've selected apps, you can send a request:
 
@@ -134,7 +134,7 @@ request.send()
 
 # Events
 
-#### Loading
+### Loading
  
 This event is triggered when the library begins loading apps, and again when it's done. It's a toggle event.
 
@@ -145,9 +145,10 @@ request.loading()
     });
 ```
  
-#### Loaded
+### Loaded
 
-This event is triggered after `loading()` receives `false`, it contains the actual loaded apps.
+This event is triggered after `loading()` receives `false`, it contains the actual loaded apps. 
+The same data is received directly from `request.load()`, also. 
 
 ```java
 request.loaded()
@@ -166,7 +167,7 @@ This event is also triggered when you use `selectAll()` or `deselectAll()` since
  than sending a selection event for every single changed app.
 
 
-#### Selection Change
+### Selection Change
 
 This event is triggered when a single app is selected or deselected.
 
@@ -178,7 +179,7 @@ request.selectionChange()
     });
 ```
 
-#### Sending
+### Sending
 
 This event is triggered when the library begins generating/sending a request, and again when it's done. 
 It's a toggle event.
@@ -191,9 +192,10 @@ request.sending()
     });
 ```
 
-#### Sent
+### Sent
 
-This event is triggered after `sending()` receives `false`, it contains the actual send result.
+This event is triggered after `sending()` receives `false`, it contains the actual send result. 
+The same data is received directly from `request.send()` also.
 
 ```java
 request.sent()
