@@ -28,10 +28,13 @@ import com.afollestad.iconrequest.PolarConfig;
 import com.afollestad.iconrequest.PolarRequest;
 import com.afollestad.iconrequest.SendResult;
 import com.afollestad.materialdialogs.MaterialDialog;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import java.io.File;
+import java.util.List;
 import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
-import rx.functions.Action1;
-import rx.functions.Func1;
 
 public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemClickListener {
 
@@ -54,6 +57,7 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
   private Unbinder unbinder;
   private MainAdapter adapter;
   private MaterialDialog dialog;
+  private CompositeDisposable subs;
 
   @OnClick(R.id.fab)
   public void onClickFab() {
@@ -82,6 +86,8 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
     setContentView(R.layout.activity_main);
     unbinder = ButterKnife.bind(this);
 
+    subs = new CompositeDisposable();
+
     toolbar.inflateMenu(R.menu.menu_main);
     toolbar.setOnMenuItemClickListener(this);
     fabView.hide();
@@ -106,9 +112,9 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
         PolarRequest.make(this, savedInstanceState)
             .config(config)
             .uriTransformer(
-                new Func1<Uri, Uri>() {
+                new Function<Uri, Uri>() {
                   @Override
-                  public Uri call(Uri uri) {
+                  public Uri apply(Uri uri) {
                     return FileProvider.getUriForFile(
                         MainActivity.this,
                         BuildConfig.APPLICATION_ID + ".fileProvider",
@@ -116,76 +122,81 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
                   }
                 });
 
-    request
-        .loading()
-        .subscribe(
-            new Action1<Boolean>() {
-              @Override
-              public void call(Boolean isLoading) {
-                progressView.setVisibility(isLoading ? VISIBLE : GONE);
-              }
-            });
-    request
-        .loaded()
-        .subscribe(
-            new Action1<LoadResult>() {
-              @Override
-              public void call(LoadResult loadResult) {
-                if (!loadResult.success()) {
-                  adapter.setAppsList(null);
-                  loadResult.error().printStackTrace();
-                  Snackbar.make(rootView, loadResult.error().getMessage(), Snackbar.LENGTH_LONG)
-                      .show();
-                  return;
-                }
-                adapter.setAppsList(loadResult.apps());
-                invalidateToolbar();
-              }
-            });
-    request
-        .selectionChange()
-        .subscribe(
-            new Action1<AppModel>() {
-              @Override
-              public void call(AppModel appModel) {
-                adapter.update(appModel);
-                invalidateToolbar();
-              }
-            });
-    request
-        .sending()
-        .subscribe(
-            new Action1<Boolean>() {
-              @Override
-              public void call(Boolean isSending) {
-                if (isSending) {
-                  dialog =
-                      new MaterialDialog.Builder(MainActivity.this)
-                          .content(R.string.preparing_your_request)
-                          .progress(true, -1)
-                          .cancelable(false)
-                          .canceledOnTouchOutside(false)
+    subs.add(
+        request
+            .loading()
+            .subscribe(
+                new Consumer<Boolean>() {
+                  @Override
+                  public void accept(Boolean isLoading) {
+                    progressView.setVisibility(isLoading ? VISIBLE : GONE);
+                  }
+                }));
+    subs.add(
+        request
+            .loaded()
+            .subscribe(
+                new Consumer<LoadResult>() {
+                  @Override
+                  public void accept(LoadResult loadResult) {
+                    if (!loadResult.success()) {
+                      adapter.setAppsList(null);
+                      loadResult.error().printStackTrace();
+                      Snackbar.make(rootView, loadResult.error().getMessage(), Snackbar.LENGTH_LONG)
                           .show();
-                } else if (dialog != null) {
-                  dialog.dismiss();
-                }
-              }
-            });
-    request
-        .sent()
-        .subscribe(
-            new Action1<SendResult>() {
-              @Override
-              public void call(SendResult sendResult) {
-                if (!sendResult.success()) {
-                  sendResult.error().printStackTrace();
-                  Snackbar.make(rootView, sendResult.error().getMessage(), Snackbar.LENGTH_LONG)
-                      .show();
-                } else {
-                  Snackbar.make(rootView, R.string.request_sent, Snackbar.LENGTH_SHORT).show();
-                }
-              }
-            });
+                      return;
+                    }
+                    adapter.setAppsList(loadResult.apps());
+                    invalidateToolbar();
+                  }
+                }));
+    subs.add(
+        request
+            .selectionChange()
+            .subscribe(
+                new Consumer<AppModel>() {
+                  @Override
+                  public void accept(AppModel appModel) {
+                    adapter.update(appModel);
+                    invalidateToolbar();
+                  }
+                }));
+    subs.add(
+        request
+            .sending()
+            .subscribe(
+                new Consumer<Boolean>() {
+                  @Override
+                  public void accept(Boolean isSending) {
+                    if (isSending) {
+                      dialog =
+                          new MaterialDialog.Builder(MainActivity.this)
+                              .content(R.string.preparing_your_request)
+                              .progress(true, -1)
+                              .cancelable(false)
+                              .canceledOnTouchOutside(false)
+                              .show();
+                    } else if (dialog != null) {
+                      dialog.dismiss();
+                    }
+                  }
+                }));
+    subs.add(
+        request
+            .sent()
+            .subscribe(
+                new Consumer<SendResult>() {
+                  @Override
+                  public void accept(SendResult sendResult) {
+                    if (!sendResult.success()) {
+                      sendResult.error().printStackTrace();
+                      Snackbar.make(rootView, sendResult.error().getMessage(), Snackbar.LENGTH_LONG)
+                          .show();
+                    } else {
+                      Snackbar.make(rootView, R.string.request_sent, Snackbar.LENGTH_SHORT).show();
+                    }
+                  }
+                }));
   }
 
   @Override
@@ -197,16 +208,31 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
   }
 
   private void invalidateToolbar() {
-    int selectedCount = request.getSelectedApps().size();
-    if (selectedCount == 0) {
-      fabView.hide();
-      toolbar.setTitle(R.string.app_name);
-      toolbar.getMenu().findItem(R.id.selectAllNone).setIcon(R.drawable.ic_action_selectall);
-    } else {
-      fabView.show();
-      toolbar.setTitle(getString(R.string.app_name_x, selectedCount));
-      toolbar.getMenu().findItem(R.id.selectAllNone).setIcon(R.drawable.ic_action_selectall);
-    }
+    subs.add(
+        request
+            .getSelectedApps()
+            .subscribe(
+                new Consumer<List<AppModel>>() {
+                  @Override
+                  public void accept(@NonNull List<AppModel> appModels) throws Exception {
+                    int selectedCount = appModels.size();
+                    if (selectedCount == 0) {
+                      fabView.hide();
+                      toolbar.setTitle(R.string.app_name);
+                      toolbar
+                          .getMenu()
+                          .findItem(R.id.selectAllNone)
+                          .setIcon(R.drawable.ic_action_selectall);
+                    } else {
+                      fabView.show();
+                      toolbar.setTitle(getString(R.string.app_name_x, selectedCount));
+                      toolbar
+                          .getMenu()
+                          .findItem(R.id.selectAllNone)
+                          .setIcon(R.drawable.ic_action_selectall);
+                    }
+                  }
+                }));
   }
 
   @Override
@@ -234,7 +260,7 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
   @Override
   public boolean onMenuItemClick(MenuItem item) {
     if (item.getItemId() == R.id.selectAllNone) {
-      if (!request.getSelectedApps().isEmpty()) {
+      if (!request.getSelectedApps().blockingGet().isEmpty()) {
         request.deselectAll();
         item.setIcon(R.drawable.ic_action_selectall);
       } else {
