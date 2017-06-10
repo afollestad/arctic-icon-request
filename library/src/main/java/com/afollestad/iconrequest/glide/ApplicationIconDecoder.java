@@ -4,18 +4,14 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-
 import com.afollestad.iconrequest.AppModel;
 import com.bumptech.glide.load.ResourceDecoder;
 import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.resource.drawable.DrawableResource;
 import com.bumptech.glide.util.Util;
-
 import java.io.IOException;
 
-/**
- * @author Aidan Follestad (afollestad)
- */
+/** @author Aidan Follestad (afollestad) */
 class ApplicationIconDecoder implements ResourceDecoder<AppModel, Drawable> {
 
   private final Context context;
@@ -45,8 +41,7 @@ class ApplicationIconDecoder implements ResourceDecoder<AppModel, Drawable> {
       }
 
       @Override
-      public void recycle() {
-      }
+      public void recycle() {}
     };
   }
 

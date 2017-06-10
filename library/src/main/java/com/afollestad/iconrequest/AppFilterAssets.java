@@ -1,22 +1,21 @@
 package com.afollestad.iconrequest;
 
+import static com.afollestad.iconrequest.FileUtil.closeQuietely;
+import static com.afollestad.iconrequest.IRLog.log;
+import static com.afollestad.iconrequest.IRUtils.isEmpty;
+
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.support.annotation.Nullable;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashSet;
 
-import static com.afollestad.iconrequest.FileUtil.closeQuietely;
-import static com.afollestad.iconrequest.IRLog.log;
-import static com.afollestad.iconrequest.IRUtils.isEmpty;
-
 class AppFilterAssets implements AppFilterSource {
 
-  private final static String TAG = AppFilterAssets.class.getSimpleName();
+  private static final String TAG = AppFilterAssets.class.getSimpleName();
   private final Context context;
 
   AppFilterAssets(Context context) {
@@ -76,10 +75,8 @@ class AppFilterAssets implements AppFilterSource {
           start += componentStartStr.length();
           end = line.indexOf(endStr, start);
           String ci = line.substring(start, end);
-          if (ci.startsWith("{"))
-            ci = ci.substring(1);
-          if (ci.endsWith("}"))
-            ci = ci.substring(0, ci.length() - 1);
+          if (ci.startsWith("{")) ci = ci.substring(1);
+          if (ci.endsWith("}")) ci = ci.substring(0, ci.length() - 1);
           component = ci;
         }
 
@@ -102,7 +99,8 @@ class AppFilterAssets implements AppFilterSource {
               if (invalidDrawables.length() > 0) {
                 invalidDrawables.append("\n");
               }
-              invalidDrawables.append(String.format("Drawable for %s was null or empty.\n", component));
+              invalidDrawables.append(
+                  String.format("Drawable for %s was null or empty.\n", component));
             }
           } else {
             final Resources r = context.getResources();
@@ -113,7 +111,11 @@ class AppFilterAssets implements AppFilterSource {
               identifier = 0;
             }
             if (identifier == 0) {
-              log(TAG, "WARNING: Drawable %s (for %s) doesn't match up with a resource.", drawable, component);
+              log(
+                  TAG,
+                  "WARNING: Drawable %s (for %s) doesn't match up with a resource.",
+                  drawable,
+                  component);
               if (errorOnInvalidDrawables) {
                 if (invalidDrawables == null) {
                   invalidDrawables = new StringBuilder();
@@ -121,7 +123,10 @@ class AppFilterAssets implements AppFilterSource {
                 if (invalidDrawables.length() > 0) {
                   invalidDrawables.append("\n");
                 }
-                invalidDrawables.append(String.format("Drawable %s (for %s) doesn't match up with a resource.\n", drawable, component));
+                invalidDrawables.append(
+                    String.format(
+                        "Drawable %s (for %s) doesn't match up with a resource.\n",
+                        drawable, component));
               }
             }
           }

@@ -1,24 +1,24 @@
 ext.versions = [
-        minSdk:              14,
-        compileSdk:          25,
-        publishVersion:      '2.0.0',
-        versionCode:         1,
+        minSdk             : 14,
+        compileSdk         : 25,
+        publishVersion     : '2.0.0',
+        versionCode        : 1,
 
-        buildTools:          '25.0.2',
-        gradlePlugin:        '2.2.0',
-        retroLambda:         '3.6.0',
+        buildTools         : '25.0.2',
+        gradlePlugin       : '2.3.2',
+        spotlessPlugin     : '3.4.0',
 
-        supportLib:          '25.3.1',
-        bridge:              '5.1.2',
-        autoValue:           '1.3',
-        autoValueParcel:     '0.2.5',
-        autoValueWith:       '1.0.0',
-        rxJava:              '1.2.9',
-        rxAndroid:           '1.2.1',
+        supportLib         : '25.3.1',
+        bridge             : '5.1.2',
+        autoValue          : '1.3',
+        autoValueParcel    : '0.2.5',
+        autoValueWith      : '1.0.0',
+        rxJava             : '1.2.9',
+        rxAndroid          : '1.2.1',
 
-        materialDialogs:     '0.9.4.3',
+        materialDialogs    : '0.9.4.3',
         materialProgressBar: '1.4.0',
-        butterKnife:         '8.5.1',
-        glide:               '3.7.0',
-        assent:              '0.2.5'
+        butterKnife        : '8.5.1',
+        glide              : '3.7.0',
+        assent             : '0.2.5'
 ]

@@ -2,9 +2,7 @@ package com.afollestad.iconrequest;
 
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
-
 import com.google.auto.value.AutoValue;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +14,7 @@ public abstract class LoadResult implements Parcelable {
   }
 
   static LoadResult create(Exception error) {
-    return new AutoValue_LoadResult(new ArrayList<>(0), error);
+    return new AutoValue_LoadResult(new ArrayList<AppModel>(0), error);
   }
 
   public boolean success() {

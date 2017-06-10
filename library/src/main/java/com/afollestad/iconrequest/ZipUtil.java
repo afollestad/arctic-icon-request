@@ -7,9 +7,7 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-/**
- * @author Aidan Follestad (afollestad)
- */
+/** @author Aidan Follestad (afollestad) */
 class ZipUtil {
 
   static void zip(File zipFile, File... files) throws Exception {
@@ -23,8 +21,7 @@ class ZipUtil {
 
         int read;
         byte[] buffer = new byte[2048];
-        while ((read = is.read(buffer)) != -1)
-          out.write(buffer, 0, read);
+        while ((read = is.read(buffer)) != -1) out.write(buffer, 0, read);
 
         FileUtil.closeQuietely(is);
         out.closeEntry();

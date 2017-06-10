@@ -1,5 +1,9 @@
 package com.afollestad.iconrequestsample;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -10,34 +14,39 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
-
-import com.afollestad.assent.Assent;
-import com.afollestad.assent.AssentActivity;
-import com.afollestad.iconrequest.PolarConfig;
-import com.afollestad.iconrequest.PolarRequest;
-import com.afollestad.materialdialogs.MaterialDialog;
-
-import java.io.File;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
+import com.afollestad.assent.Assent;
+import com.afollestad.assent.AssentActivity;
+import com.afollestad.assent.AssentCallback;
+import com.afollestad.assent.PermissionResultSet;
+import com.afollestad.iconrequest.AppModel;
+import com.afollestad.iconrequest.LoadResult;
+import com.afollestad.iconrequest.PolarConfig;
+import com.afollestad.iconrequest.PolarRequest;
+import com.afollestad.iconrequest.SendResult;
+import com.afollestad.materialdialogs.MaterialDialog;
+import java.io.File;
 import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
-
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
+import rx.functions.Action1;
+import rx.functions.Func1;
 
 public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemClickListener {
 
   @BindView(R.id.rootView)
   View rootView;
+
   @BindView(R.id.progress)
   MaterialProgressBar progressView;
+
   @BindView(R.id.fab)
   FloatingActionButton fabView;
+
   @BindView(R.id.toolbar)
   Toolbar toolbar;
+
   @BindView(R.id.list)
   RecyclerView listView;
 
@@ -49,15 +58,19 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
   @OnClick(R.id.fab)
   public void onClickFab() {
     if (!Assent.isPermissionGranted(Assent.WRITE_EXTERNAL_STORAGE)) {
-      Assent.requestPermissions(results -> {
-        if (results.allPermissionsGranted()) {
-          request.send().subscribe();
-        } else {
-          Snackbar.make(rootView,
-              R.string.permission_denied,
-              Snackbar.LENGTH_LONG).show();
-        }
-      }, 69, Assent.WRITE_EXTERNAL_STORAGE);
+      Assent.requestPermissions(
+          new AssentCallback() {
+            @Override
+            public void onPermissionResult(PermissionResultSet results) {
+              if (results.allPermissionsGranted()) {
+                request.send().subscribe();
+              } else {
+                Snackbar.make(rootView, R.string.permission_denied, Snackbar.LENGTH_LONG).show();
+              }
+            }
+          },
+          69,
+          Assent.WRITE_EXTERNAL_STORAGE);
       return;
     }
     request.send().subscribe();
@@ -74,65 +87,105 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
     fabView.hide();
 
     adapter = new MainAdapter();
-    adapter.setListener((index, app) -> request.toggleSelection(app));
+    adapter.setListener(
+        new MainAdapter.SelectionListener() {
+          @Override
+          public void onSelection(int index, AppModel app) {
+            request.toggleSelection(app);
+          }
+        });
 
-    GridLayoutManager lm = new GridLayoutManager(this, getResources().getInteger(R.integer.grid_width));
+    GridLayoutManager lm =
+        new GridLayoutManager(this, getResources().getInteger(R.integer.grid_width));
     listView.setLayoutManager(lm);
     listView.setAdapter(adapter);
 
-    PolarConfig config = PolarConfig.create(this)
-        .emailRecipient("fake-email@helloworld.com")
-        .build();
-    request = PolarRequest.make(this, savedInstanceState)
-        .config(config)
-        .uriTransformer(uri -> FileProvider.getUriForFile(this,
-            BuildConfig.APPLICATION_ID + ".fileProvider",
-            new File(uri.getPath())));
+    PolarConfig config =
+        PolarConfig.create(this).emailRecipient("fake-email@helloworld.com").build();
+    request =
+        PolarRequest.make(this, savedInstanceState)
+            .config(config)
+            .uriTransformer(
+                new Func1<Uri, Uri>() {
+                  @Override
+                  public Uri call(Uri uri) {
+                    return FileProvider.getUriForFile(
+                        MainActivity.this,
+                        BuildConfig.APPLICATION_ID + ".fileProvider",
+                        new File(uri.getPath()));
+                  }
+                });
 
-    request.loading()
-        .subscribe(isLoading -> progressView.setVisibility(isLoading ? VISIBLE : GONE));
-    request.loaded()
-        .subscribe(loadResult -> {
-          if (!loadResult.success()) {
-            adapter.setAppsList(null);
-            loadResult.error().printStackTrace();
-            Snackbar.make(rootView,
-                loadResult.error().getMessage(),
-                Snackbar.LENGTH_LONG).show();
-            return;
-          }
-          adapter.setAppsList(loadResult.apps());
-          invalidateToolbar();
-        });
-    request.selectionChange()
-        .subscribe(appModel -> {
-          adapter.update(appModel);
-          invalidateToolbar();
-        });
-    request.sending()
-        .subscribe(isSending -> {
-          if (isSending) {
-            dialog = new MaterialDialog.Builder(this)
-                .content(R.string.preparing_your_request)
-                .progress(true, -1)
-                .cancelable(false)
-                .canceledOnTouchOutside(false)
-                .show();
-          } else if (dialog != null) {
-            dialog.dismiss();
-          }
-        });
-    request.sent()
-        .subscribe(sendResult -> {
-          if (!sendResult.success()) {
-            sendResult.error().printStackTrace();
-            Snackbar.make(rootView,
-                sendResult.error().getMessage(),
-                Snackbar.LENGTH_LONG).show();
-          } else {
-            Snackbar.make(rootView, R.string.request_sent, Snackbar.LENGTH_SHORT).show();
-          }
-        });
+    request
+        .loading()
+        .subscribe(
+            new Action1<Boolean>() {
+              @Override
+              public void call(Boolean isLoading) {
+                progressView.setVisibility(isLoading ? VISIBLE : GONE);
+              }
+            });
+    request
+        .loaded()
+        .subscribe(
+            new Action1<LoadResult>() {
+              @Override
+              public void call(LoadResult loadResult) {
+                if (!loadResult.success()) {
+                  adapter.setAppsList(null);
+                  loadResult.error().printStackTrace();
+                  Snackbar.make(rootView, loadResult.error().getMessage(), Snackbar.LENGTH_LONG)
+                      .show();
+                  return;
+                }
+                adapter.setAppsList(loadResult.apps());
+                invalidateToolbar();
+              }
+            });
+    request
+        .selectionChange()
+        .subscribe(
+            new Action1<AppModel>() {
+              @Override
+              public void call(AppModel appModel) {
+                adapter.update(appModel);
+                invalidateToolbar();
+              }
+            });
+    request
+        .sending()
+        .subscribe(
+            new Action1<Boolean>() {
+              @Override
+              public void call(Boolean isSending) {
+                if (isSending) {
+                  dialog =
+                      new MaterialDialog.Builder(MainActivity.this)
+                          .content(R.string.preparing_your_request)
+                          .progress(true, -1)
+                          .cancelable(false)
+                          .canceledOnTouchOutside(false)
+                          .show();
+                } else if (dialog != null) {
+                  dialog.dismiss();
+                }
+              }
+            });
+    request
+        .sent()
+        .subscribe(
+            new Action1<SendResult>() {
+              @Override
+              public void call(SendResult sendResult) {
+                if (!sendResult.success()) {
+                  sendResult.error().printStackTrace();
+                  Snackbar.make(rootView, sendResult.error().getMessage(), Snackbar.LENGTH_LONG)
+                      .show();
+                } else {
+                  Snackbar.make(rootView, R.string.request_sent, Snackbar.LENGTH_SHORT).show();
+                }
+              }
+            });
   }
 
   @Override
@@ -148,13 +201,11 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
     if (selectedCount == 0) {
       fabView.hide();
       toolbar.setTitle(R.string.app_name);
-      toolbar.getMenu().findItem(R.id.selectAllNone)
-          .setIcon(R.drawable.ic_action_selectall);
+      toolbar.getMenu().findItem(R.id.selectAllNone).setIcon(R.drawable.ic_action_selectall);
     } else {
       fabView.show();
       toolbar.setTitle(getString(R.string.app_name_x, selectedCount));
-      toolbar.getMenu().findItem(R.id.selectAllNone)
-          .setIcon(R.drawable.ic_action_selectall);
+      toolbar.getMenu().findItem(R.id.selectAllNone).setIcon(R.drawable.ic_action_selectall);
     }
   }
 

@@ -1,15 +1,12 @@
 package com.afollestad.iconrequest;
 
 import android.graphics.Bitmap;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
-/**
- * @author Aidan Follestad (afollestad)
- */
+/** @author Aidan Follestad (afollestad) */
 class FileUtil {
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -19,8 +16,7 @@ class FileUtil {
     if (dir.isDirectory()) {
       File[] contents = dir.listFiles();
       if (contents != null && contents.length > 0) {
-        for (File fi : contents)
-          count += wipe(fi);
+        for (File fi : contents) count += wipe(fi);
       }
     }
     dir.delete();

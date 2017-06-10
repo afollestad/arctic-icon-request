@@ -2,7 +2,6 @@ package com.afollestad.iconrequest.glide;
 
 import android.graphics.drawable.Drawable;
 import android.widget.ImageView;
-
 import com.afollestad.iconrequest.AppModel;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
@@ -10,9 +9,7 @@ import com.bumptech.glide.load.data.DataFetcher;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.model.ModelLoader;
 
-/**
- * @author Aidan Follestad (afollestad)
- */
+/** @author Aidan Follestad (afollestad) */
 public class AppIconLoader implements ModelLoader<AppModel, AppModel> {
 
   public static void display(ImageView imageView, AppModel app) {
@@ -21,7 +18,8 @@ public class AppIconLoader implements ModelLoader<AppModel, AppModel> {
         .from(AppModel.class)
         .as(Drawable.class)
         .decoder(new ApplicationIconDecoder(imageView.getContext(), app.pkg()))
-        .diskCacheStrategy(DiskCacheStrategy.NONE) // cannot disk cache ApplicationInfo, nor Drawables
+        .diskCacheStrategy(
+            DiskCacheStrategy.NONE) // cannot disk cache ApplicationInfo, nor Drawables
         .load(app)
         .into(imageView);
   }
@@ -35,8 +33,7 @@ public class AppIconLoader implements ModelLoader<AppModel, AppModel> {
       }
 
       @Override
-      public void cleanup() {
-      }
+      public void cleanup() {}
 
       @Override
       public String getId() {
@@ -44,9 +41,7 @@ public class AppIconLoader implements ModelLoader<AppModel, AppModel> {
       }
 
       @Override
-      public void cancel() {
-      }
+      public void cancel() {}
     };
   }
-
 }

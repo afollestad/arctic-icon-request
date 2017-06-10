@@ -1,7 +1,6 @@
 package com.afollestad.iconrequest;
 
 import android.support.annotation.Nullable;
-
 import com.google.auto.value.AutoValue;
 
 @AutoValue

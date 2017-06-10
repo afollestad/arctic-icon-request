@@ -3,12 +3,9 @@ package com.afollestad.iconrequest;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
 import java.util.Locale;
 
-/**
- * @author Aidan Follestad (afollestad)
- */
+/** @author Aidan Follestad (afollestad) */
 class IRUtils {
 
   static boolean isEmpty(@Nullable String str) {

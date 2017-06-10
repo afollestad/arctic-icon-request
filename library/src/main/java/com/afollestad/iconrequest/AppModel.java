@@ -1,5 +1,7 @@
 package com.afollestad.iconrequest;
 
+import static com.afollestad.iconrequest.IRUtils.inClassPath;
+
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -7,17 +9,11 @@ import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.widget.ImageView;
-
 import com.afollestad.iconrequest.glide.AppIconLoader;
 import com.google.auto.value.AutoValue;
-
 import java.io.Serializable;
 
-import static com.afollestad.iconrequest.IRUtils.inClassPath;
-
-/**
- * @author Aidan Follestad (afollestad)
- */
+/** @author Aidan Follestad (afollestad) */
 @AutoValue
 public abstract class AppModel implements Parcelable, Serializable {
 

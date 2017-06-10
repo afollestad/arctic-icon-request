@@ -1,25 +1,22 @@
 package com.afollestad.iconrequest;
 
+import static com.afollestad.iconrequest.IRLog.log;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 
-import static com.afollestad.iconrequest.IRLog.log;
-
-/**
- * @author Aidan Follestad (afollestad)
- */
+/** @author Aidan Follestad (afollestad) */
 class ComponentInfoPm implements ComponentInfoSource {
 
-  private final static String TAG = ComponentInfoPm.class.getSimpleName();
+  private static final String TAG = ComponentInfoPm.class.getSimpleName();
   private final Context context;
 
   ComponentInfoPm(@NonNull Context context) {
@@ -29,7 +26,8 @@ class ComponentInfoPm implements ComponentInfoSource {
   @Override
   public ArrayList<AppModel> getInstalledApps(HashSet<String> filter) {
     final PackageManager pm = context.getPackageManager();
-    final List<ApplicationInfo> appInfos = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+    final List<ApplicationInfo> appInfos =
+        pm.getInstalledApplications(PackageManager.GET_META_DATA);
 
     try {
       Collections.sort(appInfos, new NameComparator(pm));

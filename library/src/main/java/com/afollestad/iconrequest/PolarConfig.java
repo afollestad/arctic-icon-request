@@ -1,15 +1,13 @@
 package com.afollestad.iconrequest;
 
+import static com.afollestad.iconrequest.FileUtil.wipe;
+
 import android.content.Context;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
 import com.google.auto.value.AutoValue;
-
 import java.io.File;
-
-import static com.afollestad.iconrequest.FileUtil.wipe;
 
 @SuppressWarnings("WeakerAccess")
 @AutoValue
@@ -51,7 +49,7 @@ public abstract class PolarConfig implements Parcelable {
   public abstract String apiKey();
 
   @AutoValue.Builder
-  public static abstract class Builder {
+  public abstract static class Builder {
 
     public abstract Builder cacheFolder(String folder);
 

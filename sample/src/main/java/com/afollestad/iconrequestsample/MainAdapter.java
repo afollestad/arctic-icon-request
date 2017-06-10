@@ -6,17 +6,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.afollestad.iconrequest.AppModel;
-
-import java.util.List;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import com.afollestad.iconrequest.AppModel;
+import java.util.List;
 
-/**
- * @author Aidan Follestad (afollestad)
- */
+/** @author Aidan Follestad (afollestad) */
 class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
 
   interface SelectionListener {
@@ -27,8 +22,7 @@ class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
   private List<AppModel> appsList;
   private SelectionListener listener;
 
-  MainAdapter() {
-  }
+  MainAdapter() {}
 
   void setAppsList(List<AppModel> appsList) {
     this.appsList = appsList;
@@ -51,8 +45,8 @@ class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
 
   @Override
   public MainVH onCreateViewHolder(ViewGroup parent, int viewType) {
-    View view = LayoutInflater.from(parent.getContext())
-        .inflate(R.layout.list_item_app, parent, false);
+    View view =
+        LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_app, parent, false);
     return new MainVH(view, this);
   }
 
@@ -77,8 +71,10 @@ class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
 
     @BindView(R.id.icon)
     ImageView icon;
+
     @BindView(R.id.title)
     TextView title;
+
     final MainAdapter adapter;
 
     MainVH(View itemView, MainAdapter adapter) {
