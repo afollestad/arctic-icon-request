@@ -5,7 +5,7 @@ or through my [Polar Request Manager](https://polar.aidanfollestad.com) system.
 
 This library uses RxJava, so it is completely asynchronous, and flows are customizable.
 
-![Showcase](https://raw.githubusercontent.com/afollestad/polar-icon-request/master/art/showcase2.png)
+<img src="https://raw.githubusercontent.com/afollestad/polar-icon-request/master/art/showcase2.png" width="600" />
 
 ---
 
