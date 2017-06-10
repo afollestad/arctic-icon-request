@@ -1,9 +1,8 @@
 package com.afollestad.iconrequestsample;
 
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
-
+import android.annotation.SuppressLint;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -14,10 +13,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
-import butterknife.Unbinder;
+
 import com.afollestad.assent.Assent;
 import com.afollestad.assent.AssentActivity;
 import com.afollestad.assent.AssentCallback;
@@ -28,13 +24,22 @@ import com.afollestad.iconrequest.PolarConfig;
 import com.afollestad.iconrequest.PolarRequest;
 import com.afollestad.iconrequest.SendResult;
 import com.afollestad.materialdialogs.MaterialDialog;
+
+import java.io.File;
+import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.Unbinder;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-import java.io.File;
-import java.util.List;
 import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
+
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 
 public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemClickListener {
 
@@ -80,6 +85,7 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
     request.send().subscribe();
   }
 
+  @SuppressLint("InlinedApi")
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -197,6 +203,12 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
                     }
                   }
                 }));
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      int flags = getWindow().getDecorView().getSystemUiVisibility();
+      flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+      getWindow().getDecorView().setSystemUiVisibility(flags);
+    }
   }
 
   @Override
