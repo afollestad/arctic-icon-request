@@ -200,7 +200,7 @@ class RealSendInteractor implements SendInteractor {
       // Send email intent
       log(TAG, "Launching intent!");
       final Uri zipUri = Uri.fromFile(zipFile);
-      final Uri newUri = request.uriTransformer.call(zipUri);
+      final Uri newUri = request.uriTransformer.apply(zipUri);
       if (!zipUri.toString().equals(newUri.toString())) {
         log(TAG, "Transformed URI %s -> %s", zipUri.toString(), newUri.toString());
       }

@@ -7,17 +7,18 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.PublishSubject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.functions.Func1;
-import rx.schedulers.Schedulers;
-import rx.subjects.BehaviorSubject;
-import rx.subjects.SerializedSubject;
 
 @SuppressWarnings("WeakerAccess")
 public class PolarRequest {
@@ -27,26 +28,26 @@ public class PolarRequest {
   private static final String KEY_FILTER = "ir.loadedFilter";
   private static final String KEY_APPS = "ir.loadedApps";
 
-  private final SerializedSubject<Boolean, Boolean> loadingSubject;
-  private final SerializedSubject<LoadResult, LoadResult> loadedSubject;
-  private final SerializedSubject<Boolean, Boolean> sendingSubject;
-  private final SerializedSubject<SendResult, SendResult> sentSubject;
-  private final SerializedSubject<AppModel, AppModel> selectionChangeSubject;
+  private final PublishSubject<Boolean> loadingSubject;
+  private final PublishSubject<LoadResult> loadedSubject;
+  private final PublishSubject<Boolean> sendingSubject;
+  private final PublishSubject<SendResult> sentSubject;
+  private final PublishSubject<AppModel> selectionChangeSubject;
 
   private final AppFilterSource appFilterSource;
   private final ComponentInfoSource componentInfoSource;
   private final SendInteractor sendInteractor;
   PolarConfig config;
-  Func1<Uri, Uri> uriTransformer;
+  Function<Uri, Uri> uriTransformer;
   private HashSet<String> loadedFilter;
   private List<AppModel> loadedApps;
 
   private PolarRequest(@NonNull Context context) {
-    this.loadingSubject = BehaviorSubject.<Boolean>create().toSerialized();
-    this.loadedSubject = BehaviorSubject.<LoadResult>create().toSerialized();
-    this.sendingSubject = BehaviorSubject.<Boolean>create().toSerialized();
-    this.sentSubject = BehaviorSubject.<SendResult>create().toSerialized();
-    this.selectionChangeSubject = BehaviorSubject.<AppModel>create().toSerialized();
+    this.loadingSubject = PublishSubject.create();
+    this.loadedSubject = PublishSubject.create();
+    this.sendingSubject = PublishSubject.create();
+    this.sentSubject = PublishSubject.create();
+    this.selectionChangeSubject = PublishSubject.create();
 
     this.appFilterSource = new AppFilterAssets(context);
     this.componentInfoSource = new ComponentInfoPm(context);
@@ -56,9 +57,9 @@ public class PolarRequest {
     this.loadedApps = new ArrayList<>(0);
     this.config = PolarConfig.create(context).build();
     this.uriTransformer =
-        new Func1<Uri, Uri>() {
+        new Function<Uri, Uri>() {
           @Override
-          public Uri call(Uri uri) {
+          public Uri apply(@io.reactivex.annotations.NonNull Uri uri) throws Exception {
             return uri;
           }
         };
@@ -109,24 +110,34 @@ public class PolarRequest {
   }
 
   @NonNull
-  public PolarRequest uriTransformer(@NonNull Func1<Uri, Uri> transformer) {
+  public PolarRequest uriTransformer(@NonNull Function<Uri, Uri> transformer) {
     this.uriTransformer = transformer;
     return this;
   }
 
   private static void transferStates(List<AppModel> from, final List<AppModel> to) {
-    Observable.from(from)
-        .filter(
-            new Func1<AppModel, Boolean>() {
+    Observable.just(from)
+        .flatMapIterable(
+            new Function<List<AppModel>, Iterable<AppModel>>() {
               @Override
-              public Boolean call(AppModel appModel) {
+              public Iterable<AppModel> apply(
+                  @io.reactivex.annotations.NonNull List<AppModel> appModels) throws Exception {
+                return appModels;
+              }
+            })
+        .filter(
+            new Predicate<AppModel>() {
+              @Override
+              public boolean test(@io.reactivex.annotations.NonNull AppModel appModel)
+                  throws Exception {
                 return appModel.selected();
               }
             })
         .forEach(
-            new Action1<AppModel>() {
+            new Consumer<AppModel>() {
               @Override
-              public void call(AppModel appModel) {
+              public void accept(@io.reactivex.annotations.NonNull AppModel appModel)
+                  throws Exception {
                 for (int i = 0; i < to.size(); i++) {
                   AppModel current = to.get(i);
                   if (appModel.code().equals(current.code())) {
@@ -166,9 +177,10 @@ public class PolarRequest {
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeOn(Schedulers.computation())
         .doOnNext(
-            new Action1<LoadResult>() {
+            new Consumer<LoadResult>() {
               @Override
-              public void call(LoadResult loadResult) {
+              public void accept(@io.reactivex.annotations.NonNull LoadResult loadResult)
+                  throws Exception {
                 loadingSubject.onNext(false);
                 loadedSubject.onNext(loadResult);
               }
@@ -186,33 +198,47 @@ public class PolarRequest {
   }
 
   @NonNull
-  public List<AppModel> getSelectedApps() {
-    return Observable.from(loadedApps)
-        .filter(
-            new Func1<AppModel, Boolean>() {
+  public Single<List<AppModel>> getSelectedApps() {
+    return Observable.just(loadedApps)
+        .flatMapIterable(
+            new Function<List<AppModel>, Iterable<AppModel>>() {
               @Override
-              public Boolean call(AppModel appModel) {
+              public Iterable<AppModel> apply(
+                  @io.reactivex.annotations.NonNull List<AppModel> appModels) throws Exception {
+                return appModels;
+              }
+            })
+        .filter(
+            new Predicate<AppModel>() {
+              @Override
+              public boolean test(@io.reactivex.annotations.NonNull AppModel appModel)
+                  throws Exception {
                 return appModel.selected();
               }
             })
-        .toList()
-        .toBlocking()
-        .first();
+        .toList();
   }
 
   @NonNull
-  public List<AppModel> getRequestedApps() {
-    return Observable.from(loadedApps)
-        .filter(
-            new Func1<AppModel, Boolean>() {
+  public Single<List<AppModel>> getRequestedApps() {
+    return Observable.just(loadedApps)
+        .flatMapIterable(
+            new Function<List<AppModel>, Iterable<AppModel>>() {
               @Override
-              public Boolean call(AppModel appModel) {
+              public Iterable<AppModel> apply(
+                  @io.reactivex.annotations.NonNull List<AppModel> appModels) throws Exception {
+                return appModels;
+              }
+            })
+        .filter(
+            new Predicate<AppModel>() {
+              @Override
+              public boolean test(@io.reactivex.annotations.NonNull AppModel appModel)
+                  throws Exception {
                 return appModel.requested();
               }
             })
-        .toList()
-        .toBlocking()
-        .first();
+        .toList();
   }
 
   public boolean isSelected(@NonNull AppModel app) {
@@ -315,13 +341,14 @@ public class PolarRequest {
 
   @NonNull
   public Observable<SendResult> send() {
+
     return Observable.fromCallable(
             new Callable<SendResult>() {
               @Override
               public SendResult call() throws Exception {
                 sendingSubject.onNext(true);
                 try {
-                  List<AppModel> selectedApps = getSelectedApps();
+                  List<AppModel> selectedApps = getSelectedApps().blockingGet();
                   boolean remote = sendInteractor.send(selectedApps, PolarRequest.this);
                   return SendResult.create(selectedApps.size(), remote);
                 } catch (Exception e) {
@@ -332,9 +359,10 @@ public class PolarRequest {
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeOn(Schedulers.computation())
         .doOnNext(
-            new Action1<SendResult>() {
+            new Consumer<SendResult>() {
               @Override
-              public void call(SendResult sendResult) {
+              public void accept(@io.reactivex.annotations.NonNull SendResult sendResult)
+                  throws Exception {
                 resetSelection();
                 sendingSubject.onNext(false);
                 sentSubject.onNext(sendResult);
@@ -345,7 +373,6 @@ public class PolarRequest {
   @NonNull
   public Observable<Boolean> loading() {
     return loadingSubject
-        .asObservable()
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeOn(Schedulers.computation());
   }
@@ -353,7 +380,6 @@ public class PolarRequest {
   @NonNull
   public Observable<LoadResult> loaded() {
     return loadedSubject
-        .asObservable()
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeOn(Schedulers.computation());
   }
@@ -361,7 +387,6 @@ public class PolarRequest {
   @NonNull
   public Observable<Boolean> sending() {
     return sendingSubject
-        .asObservable()
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeOn(Schedulers.computation());
   }
@@ -369,7 +394,6 @@ public class PolarRequest {
   @NonNull
   public Observable<SendResult> sent() {
     return sentSubject
-        .asObservable()
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeOn(Schedulers.computation());
   }
@@ -377,7 +401,6 @@ public class PolarRequest {
   @NonNull
   public Observable<AppModel> selectionChange() {
     return selectionChangeSubject
-        .asObservable()
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeOn(Schedulers.computation());
   }

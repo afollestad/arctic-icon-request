@@ -13,8 +13,8 @@ ext.versions = [
         autoValue          : '1.3',
         autoValueParcel    : '0.2.5',
         autoValueWith      : '1.0.0',
-        rxJava             : '1.2.9',
-        rxAndroid          : '1.2.1',
+        rxJava             : '2.1.0',
+        rxAndroid          : '2.0.1',
 
         materialDialogs    : '0.9.4.5',
         materialProgressBar: '1.4.0',
