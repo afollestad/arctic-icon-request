@@ -21,7 +21,7 @@ Add this to your module's `build.gradle` file (make sure the version matches the
 ```gradle
 dependencies {
 	// ... other dependencies
-	compile 'com.afollestad:icon-request:2.0.0'
+	compile 'com.afollestad:icon-request:2.1.0'
 }
 ```
 
