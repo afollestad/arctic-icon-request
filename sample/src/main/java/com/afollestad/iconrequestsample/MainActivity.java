@@ -1,5 +1,8 @@
 package com.afollestad.iconrequestsample;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+
 import android.annotation.SuppressLint;
 import android.net.Uri;
 import android.os.Build;
@@ -13,7 +16,10 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.Unbinder;
 import com.afollestad.assent.Assent;
 import com.afollestad.assent.AssentActivity;
 import com.afollestad.assent.AssentCallback;
@@ -24,22 +30,13 @@ import com.afollestad.iconrequest.PolarConfig;
 import com.afollestad.iconrequest.PolarRequest;
 import com.afollestad.iconrequest.SendResult;
 import com.afollestad.materialdialogs.MaterialDialog;
-
-import java.io.File;
-import java.util.List;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
-import butterknife.Unbinder;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import java.io.File;
+import java.util.List;
 import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
-
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
 
 public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemClickListener {
 
