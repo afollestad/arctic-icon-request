@@ -253,6 +253,7 @@ public class MainActivity extends AssentActivity implements Toolbar.OnMenuItemCl
   @Override
   protected void onDestroy() {
     super.onDestroy();
+    subs.dispose();
     unbinder.unbind();
     request = null;
   }
