@@ -1,6 +1,6 @@
 package com.afollestad.iconrequest;
 
-import static com.afollestad.iconrequest.FileUtil.closeQuietely;
+import static com.afollestad.iconrequest.FileUtil.closeQuietly;
 import static com.afollestad.iconrequest.IRLog.log;
 import static com.afollestad.iconrequest.IRUtils.isEmpty;
 
@@ -143,8 +143,8 @@ class AppFilterAssets implements AppFilterSource {
     } catch (final Throwable e) {
       throw new Exception("Failed to read " + filterName, e);
     } finally {
-      closeQuietely(reader);
-      closeQuietely(is);
+      closeQuietly(reader);
+      closeQuietly(is);
     }
 
     return defined;

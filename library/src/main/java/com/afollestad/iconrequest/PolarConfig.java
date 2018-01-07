@@ -46,6 +46,9 @@ public abstract class PolarConfig implements Parcelable {
   public abstract boolean errorOnInvalidDrawables();
 
   @Nullable
+  public abstract String apiHost();
+
+  @Nullable
   public abstract String apiKey();
 
   @AutoValue.Builder
@@ -66,6 +69,8 @@ public abstract class PolarConfig implements Parcelable {
     public abstract Builder includeDeviceInfo(boolean include);
 
     public abstract Builder errorOnInvalidDrawables(boolean error);
+
+    public abstract Builder apiHost(@Nullable String host);
 
     public abstract Builder apiKey(@Nullable String key);
 

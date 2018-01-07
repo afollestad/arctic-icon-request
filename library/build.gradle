@@ -6,6 +6,11 @@ android {
     compileSdkVersion versions.compileSdk
     buildToolsVersion versions.buildTools
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     defaultConfig {
         minSdkVersion versions.minSdk
         targetSdkVersion versions.compileSdk
@@ -24,18 +29,18 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-annotations:' + versions.supportLib
-    compile 'com.afollestad:bridge:' + versions.bridge
+    implementation 'com.android.support:support-annotations:' + versions.supportLib
+    implementation 'com.afollestad:bridge:' + versions.bridge
 
-    compile 'com.google.auto.value:auto-value:' + versions.autoValue
+    provided 'com.jakewharton.auto.value:auto-value-annotations:' + versions.autoValue
     annotationProcessor 'com.google.auto.value:auto-value:' + versions.autoValue
     annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:' + versions.autoValueParcel
     annotationProcessor 'com.gabrielittner.auto.value:auto-value-with:' + versions.autoValueWith
-    
-    compile 'io.reactivex.rxjava2:rxjava:' + versions.rxJava
-    compile 'io.reactivex.rxjava2:rxandroid:' + versions.rxAndroid
 
-    provided 'com.github.bumptech.glide:glide:' + versions.glide
+    api 'io.reactivex.rxjava2:rxjava:' + versions.rxJava
+    api 'io.reactivex.rxjava2:rxandroid:' + versions.rxAndroid
+    api 'com.github.bumptech.glide:glide:' + versions.glide
+
     provided 'com.android.support:support-v13:' + versions.supportLib
 }
 

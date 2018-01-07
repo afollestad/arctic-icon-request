@@ -61,7 +61,8 @@ Configuration uses a builder class called `PolarConfig`:
 
 ```java
 PolarConfig config = PolarConfig.create(this)
-    .apiKey("1234") // optional, specify for Polar Request Manager usage
+    .apiHost("https://your-server.com") // optional, specify for Request Manager usage
+    .apiKey("1234") // optional, specify for Request Manager usage
     .emailRecipient("helloworld@hi.com") // required IF you don't specify an API key
     .appFilterName("appfilter.xml")
     .cacheFolder(getCacheDir().getAbsolutePath())

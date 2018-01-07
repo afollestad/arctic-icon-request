@@ -23,12 +23,12 @@ class ZipUtil {
         byte[] buffer = new byte[2048];
         while ((read = is.read(buffer)) != -1) out.write(buffer, 0, read);
 
-        FileUtil.closeQuietely(is);
+        FileUtil.closeQuietly(is);
         out.closeEntry();
       }
     } finally {
-      FileUtil.closeQuietely(is);
-      FileUtil.closeQuietely(out);
+      FileUtil.closeQuietly(is);
+      FileUtil.closeQuietly(out);
     }
   }
 }

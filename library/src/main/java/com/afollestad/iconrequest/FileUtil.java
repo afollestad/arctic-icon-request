@@ -29,7 +29,7 @@ class FileUtil {
       os = new FileOutputStream(file);
       icon.compress(Bitmap.CompressFormat.PNG, 100, os);
     } finally {
-      FileUtil.closeQuietely(os);
+      FileUtil.closeQuietly(os);
     }
   }
 
@@ -44,11 +44,11 @@ class FileUtil {
       os.write(content);
       os.flush();
     } finally {
-      closeQuietely(os);
+      closeQuietly(os);
     }
   }
 
-  static void closeQuietely(Closeable c) {
+  static void closeQuietly(Closeable c) {
     try {
       c.close();
     } catch (Throwable ignored) {

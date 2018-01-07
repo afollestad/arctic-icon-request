@@ -10,15 +10,12 @@ import android.support.annotation.Nullable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("WeakerAccess")
 public class PolarRequest {
@@ -56,13 +53,7 @@ public class PolarRequest {
     this.loadedFilter = new HashSet<>(0);
     this.loadedApps = new ArrayList<>(0);
     this.config = PolarConfig.create(context).build();
-    this.uriTransformer =
-        new Function<Uri, Uri>() {
-          @Override
-          public Uri apply(@io.reactivex.annotations.NonNull Uri uri) throws Exception {
-            return uri;
-          }
-        };
+    this.uriTransformer = uri -> uri;
   }
 
   @NonNull
@@ -117,36 +108,17 @@ public class PolarRequest {
 
   private static void transferStates(List<AppModel> from, final List<AppModel> to) {
     Observable.just(from)
-        .flatMapIterable(
-            new Function<List<AppModel>, Iterable<AppModel>>() {
-              @Override
-              public Iterable<AppModel> apply(
-                  @io.reactivex.annotations.NonNull List<AppModel> appModels) throws Exception {
-                return appModels;
-              }
-            })
-        .filter(
-            new Predicate<AppModel>() {
-              @Override
-              public boolean test(@io.reactivex.annotations.NonNull AppModel appModel)
-                  throws Exception {
-                return appModel.selected();
-              }
-            })
+        .flatMapIterable(appModels -> appModels)
+        .filter(AppModel::selected)
         .forEach(
-            new Consumer<AppModel>() {
-              @Override
-              public void accept(@io.reactivex.annotations.NonNull AppModel appModel)
-                  throws Exception {
-                for (int i = 0; i < to.size(); i++) {
-                  AppModel current = to.get(i);
-                  if (appModel.code().equals(current.code())) {
-                    to.set(
-                        i,
-                        current.withSelectedAndRequested(
-                            appModel.selected(), appModel.requested()));
-                    break;
-                  }
+            appModel -> {
+              for (int i = 0; i < to.size(); i++) {
+                AppModel current = to.get(i);
+                if (appModel.code().equals(current.code())) {
+                  to.set(
+                      i,
+                      current.withSelectedAndRequested(appModel.selected(), appModel.requested()));
+                  break;
                 }
               }
             });
@@ -155,35 +127,27 @@ public class PolarRequest {
   @NonNull
   public Observable<LoadResult> load() {
     return Observable.fromCallable(
-            new Callable<LoadResult>() {
-              @Override
-              public LoadResult call() throws Exception {
-                loadingSubject.onNext(true);
-                try {
-                  loadedFilter =
-                      appFilterSource.load(
-                          config.appFilterName(), config.errorOnInvalidDrawables());
-                } catch (Exception e) {
-                  return LoadResult.create(e);
-                }
-                List<AppModel> newLoadedApps = componentInfoSource.getInstalledApps(loadedFilter);
-                if (!loadedApps.isEmpty()) {
-                  transferStates(loadedApps, newLoadedApps);
-                }
-                loadedApps = newLoadedApps;
-                return LoadResult.create(loadedApps);
+            () -> {
+              loadingSubject.onNext(true);
+              try {
+                loadedFilter =
+                    appFilterSource.load(config.appFilterName(), config.errorOnInvalidDrawables());
+              } catch (Exception e) {
+                return LoadResult.create(e);
               }
+              List<AppModel> newLoadedApps = componentInfoSource.getInstalledApps(loadedFilter);
+              if (!loadedApps.isEmpty()) {
+                transferStates(loadedApps, newLoadedApps);
+              }
+              loadedApps = newLoadedApps;
+              return LoadResult.create(loadedApps);
             })
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeOn(Schedulers.computation())
         .doOnNext(
-            new Consumer<LoadResult>() {
-              @Override
-              public void accept(@io.reactivex.annotations.NonNull LoadResult loadResult)
-                  throws Exception {
-                loadingSubject.onNext(false);
-                loadedSubject.onNext(loadResult);
-              }
+            loadResult -> {
+              loadingSubject.onNext(false);
+              loadedSubject.onNext(loadResult);
             });
   }
 
@@ -200,44 +164,16 @@ public class PolarRequest {
   @NonNull
   public Single<List<AppModel>> getSelectedApps() {
     return Observable.just(loadedApps)
-        .flatMapIterable(
-            new Function<List<AppModel>, Iterable<AppModel>>() {
-              @Override
-              public Iterable<AppModel> apply(
-                  @io.reactivex.annotations.NonNull List<AppModel> appModels) throws Exception {
-                return appModels;
-              }
-            })
-        .filter(
-            new Predicate<AppModel>() {
-              @Override
-              public boolean test(@io.reactivex.annotations.NonNull AppModel appModel)
-                  throws Exception {
-                return appModel.selected();
-              }
-            })
+        .flatMapIterable(appModels -> appModels)
+        .filter(AppModel::selected)
         .toList();
   }
 
   @NonNull
   public Single<List<AppModel>> getRequestedApps() {
     return Observable.just(loadedApps)
-        .flatMapIterable(
-            new Function<List<AppModel>, Iterable<AppModel>>() {
-              @Override
-              public Iterable<AppModel> apply(
-                  @io.reactivex.annotations.NonNull List<AppModel> appModels) throws Exception {
-                return appModels;
-              }
-            })
-        .filter(
-            new Predicate<AppModel>() {
-              @Override
-              public boolean test(@io.reactivex.annotations.NonNull AppModel appModel)
-                  throws Exception {
-                return appModel.requested();
-              }
-            })
+        .flatMapIterable(appModels -> appModels)
+        .filter(AppModel::requested)
         .toList();
   }
 
@@ -343,30 +279,23 @@ public class PolarRequest {
   public Observable<SendResult> send() {
 
     return Observable.fromCallable(
-            new Callable<SendResult>() {
-              @Override
-              public SendResult call() throws Exception {
-                sendingSubject.onNext(true);
-                try {
-                  List<AppModel> selectedApps = getSelectedApps().blockingGet();
-                  boolean remote = sendInteractor.send(selectedApps, PolarRequest.this);
-                  return SendResult.create(selectedApps.size(), remote);
-                } catch (Exception e) {
-                  return SendResult.create(e);
-                }
+            () -> {
+              sendingSubject.onNext(true);
+              try {
+                List<AppModel> selectedApps = getSelectedApps().blockingGet();
+                boolean remote = sendInteractor.send(selectedApps, PolarRequest.this);
+                return SendResult.create(selectedApps.size(), remote);
+              } catch (Exception e) {
+                return SendResult.create(e);
               }
             })
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeOn(Schedulers.computation())
         .doOnNext(
-            new Consumer<SendResult>() {
-              @Override
-              public void accept(@io.reactivex.annotations.NonNull SendResult sendResult)
-                  throws Exception {
-                resetSelection();
-                sendingSubject.onNext(false);
-                sentSubject.onNext(sendResult);
-              }
+            sendResult -> {
+              resetSelection();
+              sendingSubject.onNext(false);
+              sentSubject.onNext(sendResult);
             });
   }
 

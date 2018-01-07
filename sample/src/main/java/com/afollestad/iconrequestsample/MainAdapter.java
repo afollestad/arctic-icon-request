@@ -9,6 +9,7 @@ import android.widget.TextView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import com.afollestad.iconrequest.AppModel;
+import com.bumptech.glide.Glide;
 import java.util.List;
 
 /** @author Aidan Follestad (afollestad) */
@@ -58,7 +59,7 @@ class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainVH> {
   @Override
   public void onBindViewHolder(MainVH holder, int position) {
     final AppModel app = appsList.get(position);
-    app.loadIcon(holder.icon);
+    Glide.with(holder.icon).load(app).into(holder.icon);
 
     holder.title.setText(app.name());
     holder.title.setAlpha(1f);

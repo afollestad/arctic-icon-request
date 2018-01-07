@@ -1,19 +1,21 @@
 package com.afollestad.iconrequest;
 
-import static com.afollestad.iconrequest.IRUtils.inClassPath;
-
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
-import android.widget.ImageView;
-import com.afollestad.iconrequest.glide.AppIconLoader;
 import com.google.auto.value.AutoValue;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.Serializable;
 
 /** @author Aidan Follestad (afollestad) */
+@SuppressWarnings("WeakerAccess")
 @AutoValue
 public abstract class AppModel implements Parcelable, Serializable {
 
@@ -45,11 +47,21 @@ public abstract class AppModel implements Parcelable, Serializable {
     return ai.loadIcon(context.getPackageManager());
   }
 
-  public void loadIcon(ImageView into) {
-    if (inClassPath("com.bumptech.glide.load.model.ModelLoader")) {
-      AppIconLoader.display(into, this);
-    } else {
-      into.setImageDrawable(getIcon(into.getContext()));
+  public InputStream getIconStream(Context context) {
+    Drawable drawable = getIcon(context);
+    ByteArrayOutputStream os = null;
+    try {
+      final Bitmap bmp =
+          Bitmap.createBitmap(
+              drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+      final Canvas canvas = new Canvas(bmp);
+      drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+      drawable.draw(canvas);
+      os = new ByteArrayOutputStream(bmp.getByteCount());
+      bmp.compress(Bitmap.CompressFormat.PNG, 100, os);
+      return new ByteArrayInputStream(os.toByteArray());
+    } finally {
+      FileUtil.closeQuietly(os);
     }
   }
 

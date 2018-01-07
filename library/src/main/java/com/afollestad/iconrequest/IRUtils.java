@@ -1,7 +1,6 @@
 package com.afollestad.iconrequest;
 
 import android.os.Build;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import java.util.Locale;
 
@@ -10,15 +9,6 @@ class IRUtils {
 
   static boolean isEmpty(@Nullable String str) {
     return str == null || str.trim().isEmpty();
-  }
-
-  static boolean inClassPath(@NonNull String clsName) {
-    try {
-      Class.forName(clsName);
-      return true;
-    } catch (Throwable t) {
-      return false;
-    }
   }
 
   static String drawableName(String appName) {
@@ -63,30 +53,32 @@ class IRUtils {
       case Build.VERSION_CODES.M:
         return "Marshmallow";
       case Build.VERSION_CODES.N:
+      case Build.VERSION_CODES.N_MR1:
         return "Nougat";
-      case 25:
-        return "O";
-      case 26:
-        return "P";
-      case 27:
-        return "Q";
+      case Build.VERSION_CODES.O:
+      case Build.VERSION_CODES.O_MR1:
+        return "Oreo";
       case 28:
-        return "R";
+        return "P";
       case 29:
-        return "S";
+        return "Q";
       case 30:
-        return "T";
+        return "R";
       case 31:
-        return "U";
+        return "S";
       case 32:
-        return "V";
+        return "T";
       case 33:
-        return "W";
+        return "U";
       case 34:
-        return "X";
+        return "V";
       case 35:
-        return "Y";
+        return "W";
       case 36:
+        return "X";
+      case 37:
+        return "Y";
+      case 38:
         return "Z";
     }
   }
