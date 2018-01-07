@@ -1,7 +1,7 @@
 # Icon Request
 
-This library allows icon pack dashboards to easily send icon requests either traditionally via email,
-or through my [Polar Request Manager](https://polar.aidanfollestad.com) system.
+This library allows icon pack dashboards to easily send icon requests
+either traditionally via email, or through the [Arctic Manager](https://arcticmanager.com) system.
 
 This library uses RxJava, so it is completely asynchronous, and flows are customizable.
 
