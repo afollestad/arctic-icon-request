@@ -1,14 +1,16 @@
 ext.versions = [
         minSdk             : 14,
-        compileSdk         : 26,
+        compileSdk         : 27,
         publishVersion     : '2.1.0',
         versionCode        : 2,
 
-        buildTools         : '26.0.0',
-        gradlePlugin       : '2.3.2',
-        spotlessPlugin     : '3.4.0',
 
-        supportLib         : '25.3.1',
+        bintrayRelease     : '0.8.0',
+        buildTools         : '27.0.2',
+        gradlePlugin       : '3.0.1',
+        spotlessPlugin     : '3.8.0',
+
+        supportLib         : '27.0.2',
         bridge             : '5.1.2',
         autoValue          : '1.3',
         autoValueParcel    : '0.2.5',
@@ -16,9 +18,9 @@ ext.versions = [
         rxJava             : '2.1.0',
         rxAndroid          : '2.0.1',
 
-        materialDialogs    : '0.9.4.5',
+        materialDialogs    : '0.9.6.0',
         materialProgressBar: '1.4.0',
-        butterKnife        : '8.6.0',
-        glide              : '3.7.0',
+        butterKnife        : '8.8.1',
+        glide              : '4.5.0',
         assent             : '0.2.5'
 ]

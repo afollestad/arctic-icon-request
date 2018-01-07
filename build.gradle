@@ -4,26 +4,26 @@ buildscript {
     apply from: './dependencies.gradle'
 
     repositories {
+        google()
         jcenter()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:' + versions.gradlePlugin
         classpath "com.diffplug.spotless:spotless-plugin-gradle:" + versions.spotlessPlugin
+        classpath 'com.novoda:bintray-release:' + versions.bintrayRelease
     }
 }
 
 allprojects {
     repositories {
+        google()
         jcenter()
         maven { url "https://jitpack.io" }
-        maven {
-            url 'https://maven.google.com'
-        }
     }
 
     buildscript {
         repositories {
-            maven { url "https://plugins.gradle.org/m2/" }
+            google()
         }
     }
     apply plugin: "com.diffplug.gradle.spotless"
@@ -36,8 +36,4 @@ allprojects {
             endWithNewline()
         }
     }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
 }
