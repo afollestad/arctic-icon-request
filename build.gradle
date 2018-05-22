@@ -1,39 +1,54 @@
 apply from: './dependencies.gradle'
+apply plugin: 'com.github.ben-manes.versions'
 
 buildscript {
-    apply from: './dependencies.gradle'
+  apply from: './dependencies.gradle'
 
-    repositories {
-        google()
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:' + versions.gradlePlugin
-        classpath "com.diffplug.spotless:spotless-plugin-gradle:" + versions.spotlessPlugin
-        classpath 'com.novoda:bintray-release:' + versions.bintrayRelease
-    }
+  repositories {
+    google()
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.android.tools.build:gradle:' + versions.gradlePlugin
+    classpath "com.diffplug.spotless:spotless-plugin-gradle:" + versions.spotlessPlugin
+    classpath 'com.novoda:bintray-release:' + versions.bintrayRelease
+    classpath 'com.github.ben-manes:gradle-versions-plugin:' + versions.versionsPlugin
+  }
 }
 
 allprojects {
-    repositories {
-        google()
-        jcenter()
-        maven { url "https://jitpack.io" }
-    }
+  repositories {
+    google()
+    jcenter()
+    maven { url "https://jitpack.io" }
+  }
 
-    buildscript {
-        repositories {
-            google()
-        }
+  buildscript {
+    repositories {
+      google()
     }
-    apply plugin: "com.diffplug.gradle.spotless"
-    spotless {
-        java {
-            target "**/*.java"
-            trimTrailingWhitespace()
-            removeUnusedImports()
-            googleJavaFormat()
-            endWithNewline()
-        }
+  }
+  apply plugin: "com.diffplug.gradle.spotless"
+  spotless {
+    java {
+      target "**/*.java"
+      trimTrailingWhitespace()
+      removeUnusedImports()
+      googleJavaFormat()
+      endWithNewline()
     }
+  }
+}
+
+dependencyUpdates.resolutionStrategy = {
+  componentSelection { rules ->
+    rules.all { ComponentSelection selection ->
+      boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm'].any { qualifier ->
+        selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
+      }
+      if (rejected) {
+        selection.reject('Release candidate')
+      }
+    }
+  }
 }

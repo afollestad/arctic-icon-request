@@ -3,51 +3,53 @@ apply plugin: 'com.novoda.bintray-release'
 apply from: '../dependencies.gradle'
 
 android {
-    compileSdkVersion versions.compileSdk
-    buildToolsVersion versions.buildTools
+  compileSdkVersion versions.compileSdk
+  buildToolsVersion versions.buildTools
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
 
-    defaultConfig {
-        minSdkVersion versions.minSdk
-        targetSdkVersion versions.compileSdk
-        versionCode versions.versionCode
-        versionName versions.publishVersion
+  defaultConfig {
+    minSdkVersion versions.minSdk
+    targetSdkVersion versions.compileSdk
+    versionCode versions.versionCode
+    versionName versions.publishVersion
+  }
+  lintOptions {
+    abortOnError false
+  }
+  buildTypes {
+    release {
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
     }
-    lintOptions {
-        abortOnError false
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
+  }
 }
 
 dependencies {
-    implementation 'com.android.support:support-annotations:' + versions.supportLib
-    implementation 'com.afollestad:bridge:' + versions.bridge
+  implementation 'com.android.support:support-annotations:' + versions.supportLib
+  implementation 'com.afollestad:bridge:' + versions.bridge
 
-    compileOnly 'com.jakewharton.auto.value:auto-value-annotations:' + versions.autoValue
-    annotationProcessor 'com.google.auto.value:auto-value:' + versions.autoValue
-    annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:' + versions.autoValueParcel
-    annotationProcessor 'com.gabrielittner.auto.value:auto-value-with:' + versions.autoValueWith
+  compileOnly 'com.jakewharton.auto.value:auto-value-annotations:' + versions.autoValue
+  annotationProcessor 'com.google.auto.value:auto-value:' + versions.autoValue
+  annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:' + versions.autoValueParcel
+  annotationProcessor 'com.gabrielittner.auto.value:auto-value-with:' + versions.autoValueWith
 
-    api 'io.reactivex.rxjava2:rxjava:' + versions.rxJava
-    api 'io.reactivex.rxjava2:rxandroid:' + versions.rxAndroid
-    api 'com.github.bumptech.glide:glide:' + versions.glide
+  api 'io.reactivex.rxjava2:rxjava:' + versions.rxJava
+  api 'io.reactivex.rxjava2:rxandroid:' + versions.rxAndroid
+  api 'com.github.bumptech.glide:glide:' + versions.glide
 
-    compileOnly 'com.android.support:support-v13:' + versions.supportLib
+  compileOnly 'com.android.support:support-v13:' + versions.supportLib
 }
 
 publish {
-    userOrg = 'drummer-aidan'
-    groupId = 'com.afollestad'
-    artifactId = 'icon-request'
-    publishVersion = versions.publishVersion
-    website = 'https://github.com/afollestad/polar-icon-request'
+  userOrg = 'drummer-aidan'
+  groupId = 'com.afollestad'
+  artifactId = 'icon-request'
+  publishVersion = versions.publishVersion
+  website = 'https://arcticmanager.com'
+  desc =
+      'An easy to use Icon Request API, with traditional email capabilities plus the Arctic Manager API.'
 }
