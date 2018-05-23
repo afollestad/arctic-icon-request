@@ -18,7 +18,6 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import com.afollestad.iconrequest.ArcticConfig
 import com.afollestad.iconrequest.ArcticRequest
-import com.afollestad.materialdialogs.MaterialDialog
 import kotlinx.android.synthetic.main.activity_main.fab
 import kotlinx.android.synthetic.main.activity_main.list
 import kotlinx.android.synthetic.main.activity_main.progress
@@ -35,7 +34,6 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
   private lateinit var adapter: MainAdapter
 
   private var request: ArcticRequest? = null
-  private var dialog: MaterialDialog? = null
 
   private fun onClickFab() {
     val permissionGrantedOrNot = ContextCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE)
@@ -123,16 +121,7 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
 
       sending()
           .subscribe {
-            if (it) {
-              dialog = MaterialDialog.Builder(this@MainActivity)
-                  .content(R.string.preparing_your_request)
-                  .progress(true, -1)
-                  .cancelable(false)
-                  .canceledOnTouchOutside(false)
-                  .show()
-            } else {
-              dialog?.dismiss()
-            }
+            // TODO show inline progress indicator
           }
           .unsubscribeOnDetach(rootView)
 
@@ -196,11 +185,6 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
   override fun onDestroy() {
     super.onDestroy()
     request = null
-  }
-
-  override fun onPause() {
-    super.onPause()
-    dialog?.dismiss()
   }
 
   override fun onMenuItemClick(item: MenuItem): Boolean {
