@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
 apply plugin: 'com.novoda.bintray-release'
 apply from: '../dependencies.gradle'
 
@@ -32,7 +33,7 @@ dependencies {
   implementation 'com.android.support:support-annotations:' + versions.supportLib
   implementation 'com.afollestad:bridge:' + versions.bridge
 
-  compileOnly 'com.jakewharton.auto.value:auto-value-annotations:' + versions.autoValue
+  compileOnly 'com.google.auto.value:auto-value-annotations:' + versions.autoValue
   annotationProcessor 'com.google.auto.value:auto-value:' + versions.autoValue
   annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:' + versions.autoValueParcel
   annotationProcessor 'com.gabrielittner.auto.value:auto-value-with:' + versions.autoValueWith
@@ -42,6 +43,7 @@ dependencies {
   api 'com.github.bumptech.glide:glide:' + versions.glide
 
   compileOnly 'com.android.support:support-v13:' + versions.supportLib
+  implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:' + versions.kotlin
 }
 
 publish {
@@ -52,4 +54,7 @@ publish {
   website = 'https://arcticmanager.com'
   desc =
       'An easy to use Icon Request API, with traditional email capabilities plus the Arctic Manager API.'
+}
+repositories {
+  mavenCentral()
 }

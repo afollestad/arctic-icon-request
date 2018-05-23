@@ -3,6 +3,7 @@ ext.versions = [
     compileSdk         : 27,
     publishVersion     : '3.0.0',
     versionCode        : 3,
+    kotlin             : '1.2.41',
 
     versionsPlugin     : '0.17.0',
     bintrayRelease     : '0.8.1',
@@ -20,7 +21,6 @@ ext.versions = [
 
     materialDialogs    : '0.9.6.0',
     materialProgressBar: '1.4.2',
-    butterKnife        : '8.8.1',
     glide              : '4.7.1',
     assent             : '0.2.5'
 ]
