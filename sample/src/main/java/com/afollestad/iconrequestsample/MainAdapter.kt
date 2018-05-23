@@ -14,18 +14,18 @@ typealias SelectionListener = ((Int, AppModel) -> (Unit))
 /** @author Aidan Follestad (afollestad) */
 internal class MainAdapter : RecyclerView.Adapter<MainAdapter.MainVH>() {
 
-  private var appsList: MutableList<AppModel>? = null
+  private var appsList: MutableList<AppModel> = mutableListOf()
   private var listener: SelectionListener? = null
 
-  fun setAppsList(appsList: MutableList<AppModel>?) {
-    this.appsList = appsList
+  fun setAppsList(appsList: List<AppModel>?) {
+    this.appsList = appsList?.toMutableList() ?: mutableListOf()
     notifyDataSetChanged()
   }
 
   fun update(app: AppModel) {
-    for (i in appsList!!.indices) {
-      if (app == appsList!![i]) {
-        appsList!![i] = app
+    for (i in appsList.indices) {
+      if (app == appsList[i]) {
+        appsList[i] = app
         notifyItemChanged(i)
         break
       }
@@ -46,14 +46,14 @@ internal class MainAdapter : RecyclerView.Adapter<MainAdapter.MainVH>() {
   }
 
   override fun getItemCount(): Int {
-    return appsList?.size ?: 0
+    return appsList.size
   }
 
   override fun onBindViewHolder(
     holder: MainVH,
     position: Int
   ) {
-    val app = appsList!![position]
+    val app = appsList[position]
     holder.bind(app)
   }
 
@@ -71,13 +71,13 @@ internal class MainAdapter : RecyclerView.Adapter<MainAdapter.MainVH>() {
           .load(model)
           .into(itemView.icon)
       itemView.icon.alpha = 1f
-      itemView.title.text = model.name()
+      itemView.title.text = model.name
       itemView.title.alpha = 1f
-      itemView.isActivated = model.selected()
+      itemView.isActivated = model.selected
     }
 
     override fun onClick(view: View) {
-      val appModel = adapter.appsList!![adapterPosition]
+      val appModel = adapter.appsList[adapterPosition]
       adapter.listener?.invoke(adapterPosition, appModel)
     }
   }

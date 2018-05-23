@@ -1,6 +1,5 @@
 package com.afollestad.iconrequestsample
 
-import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import android.support.design.widget.Snackbar
@@ -14,8 +13,8 @@ import android.view.View.VISIBLE
 import com.afollestad.assent.Assent
 import com.afollestad.assent.AssentActivity
 import com.afollestad.assent.PermissionResultSet
-import com.afollestad.iconrequest.PolarConfig
-import com.afollestad.iconrequest.PolarRequest
+import com.afollestad.iconrequest.ArcticConfig
+import com.afollestad.iconrequest.ArcticRequest
 import com.afollestad.materialdialogs.MaterialDialog
 import kotlinx.android.synthetic.main.activity_main.fab
 import kotlinx.android.synthetic.main.activity_main.list
@@ -28,7 +27,7 @@ class MainActivity : AssentActivity(), Toolbar.OnMenuItemClickListener {
 
   private lateinit var adapter: MainAdapter
 
-  private var request: PolarRequest? = null
+  private var request: ArcticRequest? = null
   private var dialog: MaterialDialog? = null
 
   fun onClickFab() {
@@ -58,7 +57,9 @@ class MainActivity : AssentActivity(), Toolbar.OnMenuItemClickListener {
 
     toolbar.inflateMenu(R.menu.menu_main)
     toolbar.setOnMenuItemClickListener(this)
+
     fab.hide()
+    fab.setOnClickListener { onClickFab() }
 
     adapter = MainAdapter()
     adapter.setListener { _, app -> request?.toggleSelection(app) }
@@ -67,16 +68,14 @@ class MainActivity : AssentActivity(), Toolbar.OnMenuItemClickListener {
     list.layoutManager = lm
     list.adapter = adapter
 
-    val config = PolarConfig.create(this)
-        .emailRecipient("fake-email@helloworld.com")
-        .build()
-    request = PolarRequest.make(this, savedInstanceState)
-        .config(config)
-        .uriTransformer { uri ->
+    val config = ArcticConfig(emailRecipient = "fake-email@helloworld.com")
+    request = ArcticRequest.make(this, savedInstanceState)
+        .setConfig(config)
+        .setUriTransformer {
           FileProvider.getUriForFile(
               this@MainActivity,
               BuildConfig.APPLICATION_ID + ".fileProvider",
-              File(uri.path)
+              File(it.path)
           )
         }
 
@@ -90,14 +89,14 @@ class MainActivity : AssentActivity(), Toolbar.OnMenuItemClickListener {
     request!!
         .loaded()
         .subscribe { loadResult ->
-          if (!loadResult.success()) {
+          if (!loadResult.success) {
             adapter.setAppsList(null)
-            Snackbar.make(rootView!!, loadResult.error()!!.message!!, Snackbar.LENGTH_LONG)
+            Snackbar.make(rootView!!, loadResult.error!!.message!!, Snackbar.LENGTH_LONG)
                 .show()
             request!!.loaded()
                 .subscribe()
           } else {
-            adapter.setAppsList(loadResult.apps())
+            adapter.setAppsList(loadResult.apps)
             invalidateToolbar()
           }
         }
@@ -130,11 +129,11 @@ class MainActivity : AssentActivity(), Toolbar.OnMenuItemClickListener {
     request!!
         .sent()
         .subscribe {
-          if (it.success()) {
+          if (it.success) {
             Snackbar.make(rootView!!, R.string.request_sent, Snackbar.LENGTH_SHORT)
                 .show()
           } else {
-            Snackbar.make(rootView!!, it.error()!!.message!!, Snackbar.LENGTH_LONG)
+            Snackbar.make(rootView!!, it.error!!.message!!, Snackbar.LENGTH_LONG)
                 .show()
           }
         }
@@ -149,7 +148,7 @@ class MainActivity : AssentActivity(), Toolbar.OnMenuItemClickListener {
 
   override fun onResume() {
     super.onResume()
-    if (request!!.loadedApps.isEmpty()) {
+    if (request!!.getLoadedApps().isEmpty()) {
       request!!.load()
           .subscribe()
     }

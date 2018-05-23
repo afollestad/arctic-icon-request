@@ -13,9 +13,6 @@ ext.versions = [
 
     supportLib         : '27.1.1',
     bridge             : '5.1.2',
-    autoValue          : '1.6',
-    autoValueParcel    : '0.2.6',
-    autoValueWith      : '1.0.0',
     rxJava             : '2.1.13',
     rxAndroid          : '2.0.2',
 

@@ -52,15 +52,15 @@ To create a new Request object, you use the static `make(Context, Bundle)` metho
 want to call this on `onCreate(Bundle)` of an `Activity` or `Fragment`.
 
 ```java
-PolarRequest request = PolarRequest.make(this, savedInstanceState)
+ArcticRequest request = ArcticRequest.make(this, savedInstanceState)
 ```
 
 ### Configuring a Request
 
-Configuration uses a builder class called `PolarConfig`:
+Configuration uses a builder class called `ArcticConfig`:
 
 ```java
-PolarConfig config = PolarConfig.create(this)
+ArcticConfig config = ArcticConfig.create(this)
     .apiHost("https://your-server.com") // optional, specify for Request Manager usage
     .apiKey("1234") // optional, specify for Request Manager usage
     .emailRecipient("helloworld@hi.com") // required IF you don't specify an API key
@@ -74,16 +74,16 @@ PolarConfig config = PolarConfig.create(this)
     .build();
 ```
 
-You can pass an instance of this class to `PolarRequest`:
+You can pass an instance of this class to `ArcticRequest`:
 
 ```java
-PolarRequest request = // ...
+ArcticRequest request = // ...
 request.config(config);
 ```
 
 ### Loading Unthemed Apps
 
-With a configured `PolarRequest` instance, you can load unthemed apps:
+With a configured `ArcticRequest` instance, you can load unthemed apps:
 
 ```java
 request.load()
@@ -103,7 +103,7 @@ request.load()
 Once you've loaded apps, you can select/deselect apps that are sent in a request:
 
 ```java
-PolarRequest request = // ...
+ArcticRequest request = // ...
 AppModel app = // ...
 
 request.toggleSelection(app);
@@ -122,7 +122,7 @@ request.send()
     .subscribe(sendResult -> {
       if(sendResult.success()) {
         int sentCount = sendResult.sentCount();
-        boolean usedPolarRm = sendResult.usedPolarRm();
+        boolean usedArcticRm = sendResult.usedArcticRm();
         // Use result?
       } else {
         Exception error = sendResult.error();
@@ -203,7 +203,7 @@ request.sent()
     .subscribe(sendResult -> {
       if(sendResult.success()) {
         int sentCount = sendResult.sentCount();
-        boolean usedPolarRm = sendResult.usedPolarRm();
+        boolean usedArcticRm = sendResult.usedArcticRm();
         // Use result?
       } else {
         Exception error = sendResult.error();

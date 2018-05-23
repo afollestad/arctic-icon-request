@@ -33,11 +33,6 @@ dependencies {
   implementation 'com.android.support:support-annotations:' + versions.supportLib
   implementation 'com.afollestad:bridge:' + versions.bridge
 
-  compileOnly 'com.google.auto.value:auto-value-annotations:' + versions.autoValue
-  annotationProcessor 'com.google.auto.value:auto-value:' + versions.autoValue
-  annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:' + versions.autoValueParcel
-  annotationProcessor 'com.gabrielittner.auto.value:auto-value-with:' + versions.autoValueWith
-
   api 'io.reactivex.rxjava2:rxjava:' + versions.rxJava
   api 'io.reactivex.rxjava2:rxandroid:' + versions.rxAndroid
   api 'com.github.bumptech.glide:glide:' + versions.glide
