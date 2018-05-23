@@ -5,15 +5,15 @@ either traditionally via email, or through the [Arctic Manager](https://arcticma
 
 This library uses RxJava, so it is completely asynchronous, and flows are customizable.
 
-<img src="https://raw.githubusercontent.com/afollestad/polar-icon-request/master/art/showcase2.png" width="600" />
+<img src="https://raw.githubusercontent.com/afollestad/arctic-icon-request/master/art/showcase2.png" width="600" />
 
 ---
 
 # Gradle Dependency
 
 [ ![Download](https://api.bintray.com/packages/drummer-aidan/maven/icon-request/images/download.svg) ](https://bintray.com/drummer-aidan/maven/icon-request/_latestVersion)
-[![Build Status](https://travis-ci.org/afollestad/polar-icon-request.svg)](https://travis-ci.org/afollestad/polar-icon-request)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1eb8ed67c1f34eaf9bc176faeb6652bf)](https://www.codacy.com/app/drummeraidan_50/polar-icon-request?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=afollestad/polar-icon-request&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/afollestad/arctic-icon-request.svg)](https://travis-ci.org/afollestad/arctic-icon-request)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1eb8ed67c1f34eaf9bc176faeb6652bf)](https://www.codacy.com/app/drummeraidan_50/arctic-icon-request?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=afollestad/arctic-icon-request&amp;utm_campaign=Badge_Grade)
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg?style=flat-square)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
 Add this to your module's `build.gradle` file (make sure the version matches the jCenter badge above):
@@ -29,18 +29,18 @@ dependencies {
 
 # Table of Contents
 
-1. [Getting Started](https://github.com/afollestad/polar-icon-request#getting-started)
-    1. [Instantiate a Request](https://github.com/afollestad/polar-icon-request#instantiating-a-request)
-    2. [Configure a Request](https://github.com/afollestad/polar-icon-request#configuring-a-request)
-    3. [Load Unthemed Apps](https://github.com/afollestad/polar-icon-request#loading-unthemed-apps)
-    4. [Selecting Apps](https://github.com/afollestad/polar-icon-request#selecting-apps)
-    5. [Send a Request](https://github.com/afollestad/polar-icon-request#sending-a-request)
-3. [Events](https://github.com/afollestad/polar-icon-request#events)
-    1. [Loading](https://github.com/afollestad/polar-icon-request#loading)
-    2. [Loaded](https://github.com/afollestad/polar-icon-request#loaded)
-    3. [Selection Change](https://github.com/afollestad/polar-icon-request#selection-change)
-    4. [Sending](https://github.com/afollestad/polar-icon-request#sending)
-    5. [Sent](https://github.com/afollestad/polar-icon-request#sent)
+1. [Getting Started](https://github.com/afollestad/arctic-icon-request#getting-started)
+    1. [Instantiate a Request](https://github.com/afollestad/arctic-icon-request#instantiating-a-request)
+    2. [Configure a Request](https://github.com/afollestad/arctic-icon-request#configuring-a-request)
+    3. [Load Unthemed Apps](https://github.com/afollestad/arctic-icon-request#loading-unthemed-apps)
+    4. [Selecting Apps](https://github.com/afollestad/arctic-icon-request#selecting-apps)
+    5. [Send a Request](https://github.com/afollestad/arctic-icon-request#sending-a-request)
+3. [Events](https://github.com/afollestad/arctic-icon-request#events)
+    1. [Loading](https://github.com/afollestad/arctic-icon-request#loading)
+    2. [Loaded](https://github.com/afollestad/arctic-icon-request#loaded)
+    3. [Selection Change](https://github.com/afollestad/arctic-icon-request#selection-change)
+    4. [Sending](https://github.com/afollestad/arctic-icon-request#sending)
+    5. [Sent](https://github.com/afollestad/arctic-icon-request#sent)
 
 ---
 
