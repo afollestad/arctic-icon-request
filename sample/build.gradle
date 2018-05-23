@@ -46,7 +46,7 @@ dependencies {
   implementation 'me.zhanghai.android.materialprogressbar:library:' + versions.materialProgressBar
 
   implementation 'com.github.bumptech.glide:annotations:' + versions.glide
-  annotationProcessor 'com.github.bumptech.glide:compiler:' + versions.glide
+  kapt 'com.github.bumptech.glide:compiler:' + versions.glide
 
   implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:' + versions.kotlin
 }
