@@ -1,18 +1,20 @@
 package com.afollestad.iconrequestsample
 
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.support.design.widget.Snackbar
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v4.content.FileProvider
+import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.Toolbar
 import android.view.MenuItem
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import com.afollestad.assent.Assent
-import com.afollestad.assent.AssentActivity
-import com.afollestad.assent.PermissionResultSet
 import com.afollestad.iconrequest.ArcticConfig
 import com.afollestad.iconrequest.ArcticRequest
 import com.afollestad.materialdialogs.MaterialDialog
@@ -23,32 +25,41 @@ import kotlinx.android.synthetic.main.activity_main.rootView
 import kotlinx.android.synthetic.main.activity_main.toolbar
 import java.io.File
 
-class MainActivity : AssentActivity(), Toolbar.OnMenuItemClickListener {
+class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
+
+  companion object {
+    private const val WRITE_EXTERNAL_STORAGE_RQ = 69;
+  }
 
   private lateinit var adapter: MainAdapter
 
   private var request: ArcticRequest? = null
   private var dialog: MaterialDialog? = null
 
-  fun onClickFab() {
-    if (!Assent.isPermissionGranted(Assent.WRITE_EXTERNAL_STORAGE)) {
-      Assent.requestPermissions(
-          { results: PermissionResultSet ->
-            if (results.allPermissionsGranted()) {
-              request!!.send()
-                  .subscribe()
-            } else {
-              Snackbar.make(rootView!!, R.string.permission_denied, Snackbar.LENGTH_LONG)
-                  .show()
-            }
-          },
-          69,
-          Assent.WRITE_EXTERNAL_STORAGE
-      )
-      return
+  private fun onClickFab() {
+    val permissionGrantedOrNot = ContextCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE)
+    if (permissionGrantedOrNot == PackageManager.PERMISSION_GRANTED) {
+      request!!.send()
+          .subscribe()
+    } else {
+      ActivityCompat.requestPermissions(
+          this, arrayOf(WRITE_EXTERNAL_STORAGE), WRITE_EXTERNAL_STORAGE_RQ
+      );
     }
-    request!!.send()
-        .subscribe()
+  }
+
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<out String>,
+    grantResults: IntArray
+  ) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    if (requestCode == WRITE_EXTERNAL_STORAGE_RQ && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+      onClickFab()
+    } else {
+      Snackbar.make(rootView!!, R.string.permission_denied, Snackbar.LENGTH_LONG)
+          .show()
+    }
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
