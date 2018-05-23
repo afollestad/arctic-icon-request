@@ -1,30 +1,28 @@
 package com.afollestad.iconrequest
 
-import com.afollestad.bridge.Bridge.post
-import com.afollestad.iconrequest.extensions.log
-
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
-import android.os.Build
 import android.os.Build.MANUFACTURER
 import android.os.Build.MODEL
 import android.os.Build.PRODUCT
 import android.os.Build.VERSION
-import android.text.Html
 import com.afollestad.bridge.Bridge
+import com.afollestad.bridge.Bridge.post
 import com.afollestad.bridge.MultipartForm
 import com.afollestad.iconrequest.extensions.dateFormat
+import com.afollestad.iconrequest.extensions.deleteRelevantChildren
 import com.afollestad.iconrequest.extensions.drawableName
+import com.afollestad.iconrequest.extensions.log
 import com.afollestad.iconrequest.extensions.osVersionName
+import com.afollestad.iconrequest.extensions.toHtml
+import com.afollestad.iconrequest.extensions.toUri
 import com.afollestad.iconrequest.extensions.writeAll
 import com.afollestad.iconrequest.extensions.writeIconTo
 import com.afollestad.iconrequest.extensions.zipInto
-import java.io.File
-
-import java.util.Date
 import org.json.JSONObject
+import java.io.File
+import java.util.Date
 
 private fun isNullOrEmpty(value: String?): Boolean {
   return value == null || value.isEmpty()
@@ -93,7 +91,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
               + "    <scale factor=\"1.0\" />"
       )
     } else {
-      jsonSb = StringBuilder("{\n" + "    \"components\": [")
+      jsonSb = StringBuilder("{\n    \"components\": [")
     }
     for ((index, app) in selectedApps.withIndex()) {
       val name = app.name
@@ -170,17 +168,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
 
     // Cleanup files
     "Cleaning up files...".log(TAG)
-    val files = cacheFolder.listFiles()
-    for (fi in files) {
-      if (!fi.isDirectory && (fi.name.endsWith(".png")
-              || fi.name.endsWith(".xml")
-              || fi.name.endsWith(".json"))
-      ) {
-        if (fi.delete()) {
-          "Deleted: ${fi.absolutePath}".log(TAG)
-        }
-      }
-    }
+    cacheFolder.deleteRelevantChildren()
 
     // Send request to the backend server
     if (isRemote) {
@@ -188,7 +176,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
           .host(RM_HOST)
           .defaultHeader("TokenID", config.apiKey)
           .defaultHeader("Accept", "application/json")
-          .defaultHeader("User-Agent", "afollestad/icon-request")
+          .defaultHeader("User-Agent", "afollestad/arctic-icon-request")
           .validators(RemoteValidator())
       try {
         val form = MultipartForm()
@@ -207,7 +195,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
     if (!isRemote) {
       // Send email intent
       "Launching intent!".log(TAG)
-      val zipUri = Uri.fromFile(zipFile)
+      val zipUri = zipFile.toUri()
       val newUri = request.uriTransformer?.invoke(zipUri) ?: zipUri
       if (zipUri.toString() != newUri.toString()) {
         "Transformed URI $zipUri -> $newUri".log(TAG)
@@ -215,7 +203,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
       val emailIntent = Intent(Intent.ACTION_SEND)
           .putExtra(Intent.EXTRA_EMAIL, arrayOf(config.emailRecipient!!))
           .putExtra(Intent.EXTRA_SUBJECT, config.emailSubject)
-          .putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getEmailBody(selectedApps, config)))
+          .putExtra(Intent.EXTRA_TEXT, getEmailBody(selectedApps, config).toHtml())
           .putExtra(Intent.EXTRA_STREAM, newUri)
           .setType("application/zip")
       context.startActivity(

@@ -1,6 +1,10 @@
 package com.afollestad.iconrequest.extensions
 
 import android.os.Build
+import android.os.Build.VERSION
+import android.os.Build.VERSION_CODES
+import android.text.Html
+import android.text.Spanned
 import com.afollestad.iconrequest.AppModel
 import io.reactivex.Observable
 import java.util.Locale
@@ -56,4 +60,13 @@ internal fun List<AppModel>.transferStates(
           }
         }
       }
+}
+
+internal fun String.toHtml(): Spanned {
+  return if (VERSION.SDK_INT >= VERSION_CODES.N) {
+    Html.fromHtml(this, Html.FROM_HTML_MODE_LEGACY, null, null)
+  } else {
+    @Suppress("DEPRECATION")
+    Html.fromHtml(this)
+  }
 }

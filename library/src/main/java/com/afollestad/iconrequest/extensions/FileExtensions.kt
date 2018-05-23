@@ -1,6 +1,9 @@
 package com.afollestad.iconrequest.extensions
 
 import android.graphics.Bitmap
+import android.net.Uri
+import com.afollestad.iconrequest.RealSendInteractor
+import com.afollestad.iconrequest.RealSendInteractor.Companion
 import java.io.Closeable
 import java.io.File
 import java.io.FileOutputStream
@@ -51,4 +54,21 @@ internal fun Closeable.closeQuietly() {
     close()
   } catch (ignored: Throwable) {
   }
+}
+
+internal fun File.deleteRelevantChildren() {
+  for (fi in this.listFiles()) {
+    if (!fi.isDirectory && (fi.name.endsWith(".png")
+            || fi.name.endsWith(".xml")
+            || fi.name.endsWith(".json"))
+    ) {
+      if (fi.delete()) {
+        "Deleted: ${fi.absolutePath}".log("DeleteRelevantChildren")
+      }
+    }
+  }
+}
+
+internal fun File.toUri(): Uri {
+  return Uri.fromFile(this)
 }
