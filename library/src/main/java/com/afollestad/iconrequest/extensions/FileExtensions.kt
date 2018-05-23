@@ -2,8 +2,6 @@ package com.afollestad.iconrequest.extensions
 
 import android.graphics.Bitmap
 import android.net.Uri
-import com.afollestad.iconrequest.RealSendInteractor
-import com.afollestad.iconrequest.RealSendInteractor.Companion
 import java.io.Closeable
 import java.io.File
 import java.io.FileOutputStream

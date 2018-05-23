@@ -6,6 +6,7 @@ import android.os.Bundle
 import com.afollestad.iconrequest.extensions.log
 import com.afollestad.iconrequest.extensions.observeToMainThread
 import com.afollestad.iconrequest.extensions.transferStates
+import com.afollestad.iconrequest.remote.RealSendInteractor
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.subjects.PublishSubject
@@ -26,11 +27,10 @@ class ArcticRequest private constructor(context: Context) {
   private val appFilterSource: AppFilterSource
   private val componentInfoSource: ComponentInfoSource
   private val sendInteractor: SendInteractor
-  internal var config: ArcticConfig? = null
-  internal var uriTransformer: UriTransformer
+  internal var config: ArcticConfig = ArcticConfig()
+  internal var uriTransformer: UriTransformer = { uri -> uri }
 
-  var loadedFilter: HashSet<String> = hashSetOf()
-    private set
+  private var loadedFilter: HashSet<String> = hashSetOf()
   private var storedLoadedApps: MutableList<AppModel> = mutableListOf()
 
   val selectedApps: Single<List<AppModel>>
@@ -49,11 +49,6 @@ class ArcticRequest private constructor(context: Context) {
     this.appFilterSource = AppFilterAssets(context)
     this.componentInfoSource = ComponentInfoPm(context)
     this.sendInteractor = RealSendInteractor(context)
-
-    this.loadedFilter = HashSet(0)
-    this.storedLoadedApps = ArrayList(0)
-    this.config = ArcticConfig()
-    this.uriTransformer = { uri -> uri }
   }
 
   fun setConfig(config: ArcticConfig): ArcticRequest {
@@ -227,14 +222,13 @@ class ArcticRequest private constructor(context: Context) {
   fun send(): Observable<SendResult> {
     return Observable.fromCallable {
       sendingSubject.onNext(true)
-      try {
-        val selectedApps = selectedApps.blockingGet()
-        val remote = sendInteractor.send(selectedApps, this@ArcticRequest)
-        SendResult(selectedApps.size, remote)
-      } catch (e: Exception) {
-        SendResult(error = e)
-      }
+      selectedApps.blockingGet()
     }
+        .flatMap { selectedApps ->
+          sendInteractor.send(selectedApps, this@ArcticRequest)
+              .map { Pair(selectedApps.size, it) }
+        }
+        .map { SendResult(it.first, it.second) }
         .observeToMainThread()
         .doOnNext { sendResult ->
           resetSelection()

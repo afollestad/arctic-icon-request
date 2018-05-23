@@ -18,6 +18,7 @@ android {
     targetSdkVersion versions.compileSdk
     versionCode versions.versionCode
     versionName versions.publishVersion
+    consumerProguardFiles 'retrofit-proguard.txt'
   }
   lintOptions {
     abortOnError false
@@ -32,7 +33,8 @@ android {
 
 dependencies {
   implementation 'com.android.support:support-annotations:' + versions.supportLib
-  implementation 'com.afollestad:bridge:' + versions.bridge
+  implementation 'com.squareup.retrofit2:retrofit:' + versions.retrofit
+  implementation 'com.squareup.retrofit2:adapter-rxjava2:' + versions.retrofit
 
   api 'io.reactivex.rxjava2:rxjava:' + versions.rxJava
   api 'io.reactivex.rxjava2:rxandroid:' + versions.rxAndroid
