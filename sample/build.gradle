@@ -45,7 +45,9 @@ dependencies {
   implementation 'com.github.bumptech.glide:annotations:' + versions.glide
   kapt 'com.github.bumptech.glide:compiler:' + versions.glide
 
-  implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:' + versions.kotlin
+  implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk7:' + versions.kotlin) {
+    exclude group: 'org.jetbrains', module: 'annotations'
+  }
 }
 repositories {
   mavenCentral()

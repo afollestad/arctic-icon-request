@@ -39,7 +39,9 @@ dependencies {
   api 'com.github.bumptech.glide:glide:' + versions.glide
 
   compileOnly 'com.android.support:support-v13:' + versions.supportLib
-  implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:' + versions.kotlin
+  implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk7:' + versions.kotlin) {
+    exclude group: 'org.jetbrains', module: 'annotations'
+  }
 }
 
 publish {
