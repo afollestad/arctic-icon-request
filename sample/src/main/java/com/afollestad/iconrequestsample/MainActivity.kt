@@ -2,7 +2,8 @@ package com.afollestad.iconrequestsample
 
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.content.pm.PackageManager
-import android.os.Build
+import android.os.Build.VERSION.SDK_INT
+import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
@@ -80,6 +81,7 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
     list.adapter = adapter
 
     val config = ArcticConfig(emailRecipient = "fake-email@helloworld.com")
+
     request = ArcticRequest.make(this, savedInstanceState)
         .setConfig(config)
         .setUriTransformer {
@@ -90,67 +92,64 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
           )
         }
 
-    request!!
-        .loading()
-        .subscribe {
-          progress.visibility = if (it) VISIBLE else GONE
-        }
-        .unsubscribeOnDetach(rootView)
+    with(request!!) {
+      loading()
+          .subscribe {
+            progress.visibility = if (it) VISIBLE else GONE
+          }
+          .unsubscribeOnDetach(rootView)
 
-    request!!
-        .loaded()
-        .subscribe { loadResult ->
-          if (!loadResult.success) {
-            adapter.setAppsList(null)
-            Snackbar.make(rootView!!, loadResult.error!!.message!!, Snackbar.LENGTH_LONG)
-                .show()
-            request!!.loaded()
-                .subscribe()
-          } else {
-            adapter.setAppsList(loadResult.apps)
+      loaded()
+          .subscribe { loadResult ->
+            if (!loadResult.success) {
+              adapter.setAppsList(null)
+              Snackbar.make(rootView!!, loadResult.error!!.message!!, Snackbar.LENGTH_LONG)
+                  .show()
+              request!!.loaded()
+                  .subscribe()
+            } else {
+              adapter.setAppsList(loadResult.apps)
+              invalidateToolbar()
+            }
+          }
+          .unsubscribeOnDetach(rootView)
+
+      selectionChange()
+          .subscribe {
+            adapter.update(it)
             invalidateToolbar()
           }
-        }
-        .unsubscribeOnDetach(rootView)
+          .unsubscribeOnDetach(rootView)
 
-    request!!
-        .selectionChange()
-        .subscribe {
-          adapter.update(it)
-          invalidateToolbar()
-        }
-        .unsubscribeOnDetach(rootView)
-
-    request!!
-        .sending()
-        .subscribe {
-          if (it) {
-            dialog = MaterialDialog.Builder(this@MainActivity)
-                .content(R.string.preparing_your_request)
-                .progress(true, -1)
-                .cancelable(false)
-                .canceledOnTouchOutside(false)
-                .show()
-          } else {
-            dialog?.dismiss()
+      sending()
+          .subscribe {
+            if (it) {
+              dialog = MaterialDialog.Builder(this@MainActivity)
+                  .content(R.string.preparing_your_request)
+                  .progress(true, -1)
+                  .cancelable(false)
+                  .canceledOnTouchOutside(false)
+                  .show()
+            } else {
+              dialog?.dismiss()
+            }
           }
-        }
-        .unsubscribeOnDetach(rootView)
+          .unsubscribeOnDetach(rootView)
 
-    request!!
-        .sent()
-        .subscribe {
-          if (it.success) {
-            Snackbar.make(rootView!!, R.string.request_sent, Snackbar.LENGTH_SHORT)
-                .show()
-          } else {
-            Snackbar.make(rootView!!, it.error!!.message!!, Snackbar.LENGTH_LONG)
-                .show()
+      sent()
+          .subscribe {
+            if (it.success) {
+              Snackbar.make(rootView!!, R.string.request_sent, Snackbar.LENGTH_SHORT)
+                  .show()
+            } else {
+              Snackbar.make(rootView!!, it.error!!.message!!, Snackbar.LENGTH_LONG)
+                  .show()
+            }
           }
-        }
-        .unsubscribeOnDetach(rootView)
+          .unsubscribeOnDetach(rootView)
+    }
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (SDK_INT >= VERSION_CODES.O) {
       var flags = window.decorView.systemUiVisibility
       flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
       window.decorView.systemUiVisibility = flags
