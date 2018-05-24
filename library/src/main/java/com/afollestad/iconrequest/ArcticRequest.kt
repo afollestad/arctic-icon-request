@@ -229,6 +229,7 @@ class ArcticRequest private constructor(context: Context) {
               .map { Pair(selectedApps.size, it) }
         }
         .map { SendResult(it.first, it.second) }
+        .onErrorReturn { SendResult(0, false, it) }
         .observeToMainThread()
         .doOnNext { sendResult ->
           resetSelection()

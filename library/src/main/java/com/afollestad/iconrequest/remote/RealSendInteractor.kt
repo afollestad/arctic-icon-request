@@ -41,7 +41,6 @@ private fun isNullOrEmpty(value: String?): Boolean {
 /** @author Aidan Follestad (afollestad) */
 internal class RealSendInteractor(private val context: Context) : SendInteractor {
 
-  @Throws(Exception::class)
   override fun send(
     selectedApps: List<AppModel>,
     request: ArcticRequest
@@ -51,20 +50,20 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
         TAG
     )
     if (selectedApps.isEmpty()) {
-      throw Exception("No apps were selected to send.")
+      return@send Observable.error(Exception("No apps were selected to send."))
     } else if (isNullOrEmpty(
             config.emailRecipient
         ) && isNullOrEmpty(config.apiKey)
     ) {
-      throw Exception(
-          "You must either specify a recipient email or a request manager API key."
+      return@send Observable.error(
+          Exception("You must either specify a recipient email or a request manager API key.")
       )
     }
 
     val cacheFolder = config.actualCacheFolder(context)
     if (!cacheFolder.exists() && !cacheFolder.mkdirs()) {
-      throw Exception(
-          "Unable to find or create cache folder: ${cacheFolder.absolutePath}"
+      return@send Observable.error(
+          Exception("Unable to find or create cache folder: ${cacheFolder.absolutePath}")
       )
     }
 
@@ -91,7 +90,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
             TAG
         )
       } catch (e: Exception) {
-        throw Exception("Failed to save an icon: " + e.message, e)
+        return@send Observable.error(Exception("Failed to save an icon: " + e.message, e))
       }
 
     }
@@ -150,8 +149,8 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
             TAG
         )
       } catch (e: Exception) {
-        throw Exception(
-            "Failed to write your request appfilter.xml file: ${e.message}", e
+        return@send Observable.error(
+            Exception("Failed to write your request appfilter.xml file: ${e.message}", e)
         )
       }
 
@@ -168,8 +167,8 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
               TAG
           )
         } catch (e: Exception) {
-          throw Exception(
-              "Failed to write your request appfilter.json file: ${e.message}", e
+          return@send Observable.error(
+              Exception("Failed to write your request appfilter.json file: ${e.message}", e)
           )
         }
 
@@ -177,7 +176,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
     }
 
     if (filesToZip.isEmpty()) {
-      throw Exception("There are no PNG files to put into the ZIP archive.")
+      return@send Observable.error(Exception("There are no PNG files to put into the ZIP archive."))
     }
 
     // Zip everything into an archive
@@ -190,7 +189,9 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
           TAG
       )
     } catch (e: Exception) {
-      throw Exception("Failed to create the request ZIP file: ${e.message}", e)
+      return@send Observable.error(
+          Exception("Failed to create the request ZIP file: ${e.message}", e)
+      )
     }
 
     // Cleanup files
@@ -209,7 +210,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
           }
           .map { true }
     } else {
-      return launchIntent(zipFile, request.uriTransformer, config, selectedApps)
+      launchIntent(zipFile, request.uriTransformer, config, selectedApps)
     }
   }
 
