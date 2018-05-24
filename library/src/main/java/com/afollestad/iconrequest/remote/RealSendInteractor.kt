@@ -2,6 +2,7 @@ package com.afollestad.iconrequest.remote
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build.MANUFACTURER
 import android.os.Build.MODEL
@@ -18,6 +19,7 @@ import com.afollestad.iconrequest.extensions.deleteRelevantChildren
 import com.afollestad.iconrequest.extensions.drawableName
 import com.afollestad.iconrequest.extensions.log
 import com.afollestad.iconrequest.extensions.osVersionName
+import com.afollestad.iconrequest.extensions.toBitmap
 import com.afollestad.iconrequest.extensions.toHtml
 import com.afollestad.iconrequest.extensions.toUri
 import com.afollestad.iconrequest.extensions.writeAll
@@ -75,13 +77,13 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
 
     for (app in selectedApps) {
       val drawable = app.getIcon(context)
-      if (drawable !is BitmapDrawable) {
-        "Icon for ${app.code} didn't return a BitmapDrawable.".log(
+      if (drawable == null) {
+        "Got a null Drawable for ${app.code}".log(
             TAG
         )
         continue
       }
-      val icon = drawable.bitmap
+      val icon = drawable.toBitmap()
       val file = File(cacheFolder, "${app.pkg}.png")
       filesToZip.add(file)
       try {

@@ -1,6 +1,5 @@
 package com.afollestad.iconrequest.extensions
 
-import android.graphics.Bitmap
 import android.net.Uri
 import java.io.Closeable
 import java.io.File
@@ -17,17 +16,6 @@ internal fun File.wipe(): File {
   }
   delete()
   return this
-}
-
-@Throws(Exception::class)
-internal fun Bitmap.writeIconTo(file: File) {
-  var os: FileOutputStream? = null
-  try {
-    os = FileOutputStream(file)
-    compress(Bitmap.CompressFormat.PNG, 100, os)
-  } finally {
-    os?.closeQuietly()
-  }
 }
 
 @Throws(Exception::class)
