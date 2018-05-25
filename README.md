@@ -1,11 +1,9 @@
 # Icon Request
 
-**Note: this doc currently represents the state of the upcoming release.**
-
 This library allows icon pack dashboards to easily send icon requests
 either traditionally via email, or through the [Arctic Manager](https://arcticmanager.com) system.
 
-<img src="https://raw.githubusercontent.com/afollestad/arctic-icon-request/master/art/showcase2.png" width="600" />
+<img src="https://raw.githubusercontent.com/afollestad/arctic-icon-request/master/art/showcase2.png" width="450" />
 
 ---
 
