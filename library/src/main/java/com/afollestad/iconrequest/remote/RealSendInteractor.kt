@@ -48,11 +48,11 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
     request: ArcticRequest
   ): Observable<Boolean> {
     val config = request.config
-    "Preparing your request to send...".log(
+    "Preparing your request to performSend...".log(
         TAG
     )
     if (selectedApps.isEmpty()) {
-      return@send Observable.error(Exception("No apps were selected to send."))
+      return@send Observable.error(Exception("No apps were selected to performSend."))
     } else if (isNullOrEmpty(
             config.emailRecipient
         ) && isNullOrEmpty(config.apiKey)
@@ -275,7 +275,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
 
   private fun launchIntent(
     zipFile: File,
-    uriTransformer: UriTransformer?,
+    uriTransformer: UriTransformer,
     config: ArcticConfig,
     selectedApps: List<AppModel>
   ): Observable<Boolean> {

@@ -38,12 +38,11 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
   private fun onClickFab() {
     val permissionGrantedOrNot = ContextCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE)
     if (permissionGrantedOrNot == PackageManager.PERMISSION_GRANTED) {
-      request.send()
-          .subscribe()
+      request.performSend()
     } else {
       ActivityCompat.requestPermissions(
           this, arrayOf(WRITE_EXTERNAL_STORAGE), WRITE_EXTERNAL_STORAGE_RQ
-      );
+      )
     }
   }
 
@@ -131,34 +130,31 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
 
   override fun onResume() {
     super.onResume()
-    if (request.getLoadedApps().isEmpty()) {
-      request.load()
-          .subscribe()
+    if (request.loadedApps.isEmpty()) {
+      request.performLoad()
     }
   }
 
+  override fun onPause() {
+    request.dispose()
+    super.onPause()
+  }
+
   private fun invalidateToolbar() {
-    request
-        .selectedApps
-        .subscribe { appModels ->
-          val selectedCount = appModels.size
-          if (selectedCount == 0) {
-            fab.hide()
-            toolbar.setTitle(R.string.app_name)
-            toolbar
-                .menu
-                .findItem(R.id.selectAllNone)
-                .setIcon(R.drawable.ic_action_selectall)
-          } else {
-            fab.show()
-            toolbar.title = getString(R.string.app_name_x, selectedCount)
-            toolbar
-                .menu
-                .findItem(R.id.selectAllNone)
-                .setIcon(R.drawable.ic_action_selectall)
-          }
-        }
-        .unsubscribeOnDetach(rootView)
+    val selectedCount = request.selectedApps.size
+    if (selectedCount == 0) {
+      fab.hide()
+      toolbar.setTitle(R.string.app_name)
+      toolbar.menu
+          .findItem(R.id.selectAllNone)
+          .setIcon(R.drawable.ic_action_selectall)
+    } else {
+      fab.show()
+      toolbar.title = getString(R.string.app_name_x, selectedCount)
+      toolbar.menu
+          .findItem(R.id.selectAllNone)
+          .setIcon(R.drawable.ic_action_selectall)
+    }
   }
 
   override fun onSaveInstanceState(outState: Bundle) {
@@ -168,7 +164,7 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
 
   override fun onMenuItemClick(item: MenuItem): Boolean {
     if (item.itemId == R.id.selectAllNone) {
-      if (!request.selectedApps.blockingGet().isEmpty()) {
+      if (!request.selectedApps.isEmpty()) {
         request.deselectAll()
         item.setIcon(R.drawable.ic_action_selectall)
       } else {

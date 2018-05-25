@@ -7,10 +7,12 @@ import android.net.Uri
 import android.os.Bundle
 import com.afollestad.iconrequest.extensions.log
 import com.afollestad.iconrequest.extensions.observeToMainThread
+import com.afollestad.iconrequest.extensions.plusAssign
 import com.afollestad.iconrequest.extensions.transferStates
 import com.afollestad.iconrequest.remote.RealSendInteractor
 import io.reactivex.Observable
 import io.reactivex.Single
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.subjects.PublishSubject
 import java.util.ArrayList
 import java.util.HashSet
@@ -37,15 +39,19 @@ class ArcticRequest constructor(
   private val appFilterSource: AppFilterSource
   private val componentInfoSource: ComponentInfoSource
   private val sendInteractor: SendInteractor
+  private val disposables = CompositeDisposable()
 
   private var loadedFilter: HashSet<String>
   private var storedLoadedApps: MutableList<AppModel>
 
   val selectedApps: List<AppModel>
-    get() = storedLoadedApps.filter { it.selected }
+    get() = loadedApps.filter { it.selected }
 
   val requestedApps: List<AppModel>
-    get() = storedLoadedApps.filter { it.requested }
+    get() = loadedApps.filter { it.requested }
+
+  val loadedApps: List<AppModel>
+    get() = storedLoadedApps.toList()
 
   init {
     this.appFilterSource = AppFilterAssets(context)
@@ -68,31 +74,26 @@ class ArcticRequest constructor(
     out.putSerializable(KEY_APPS, storedLoadedApps.toTypedArray())
   }
 
-  fun load(): Observable<LoadResult> {
-    return Observable.fromCallable {
-      onLoading?.invoke()
-      try {
-        loadedFilter =
-            appFilterSource.load(config.appFilterName, config.errorOnInvalidDrawables)!!
-      } catch (e: Exception) {
-        return@fromCallable LoadResult(error = e)
-      }
-
-      val newLoadedApps = componentInfoSource.getInstalledApps(loadedFilter)
-      if (!storedLoadedApps.isEmpty()) {
-        storedLoadedApps.transferStates(newLoadedApps)
-      }
-      storedLoadedApps = newLoadedApps
-      LoadResult(storedLoadedApps)
-    }
+  fun performLoad() {
+    disposables += Observable.fromCallable { onLoading?.invoke() }
+        .flatMap {
+          appFilterSource.load(config.appFilterName, config.errorOnInvalidDrawables)
+        }
+        .map {
+          loadedFilter = it
+          val newLoadedApps = componentInfoSource.getInstalledApps(loadedFilter)
+          if (!storedLoadedApps.isEmpty()) {
+            storedLoadedApps.transferStates(newLoadedApps)
+          }
+          storedLoadedApps = newLoadedApps
+          storedLoadedApps
+        }
+        .map { LoadResult(it) }
+        .onErrorReturn { LoadResult(error = it) }
         .observeToMainThread()
-        .doOnNext {
+        .subscribe {
           onLoaded?.invoke(it)
         }
-  }
-
-  fun getLoadedApps(): List<AppModel> {
-    return storedLoadedApps.toList()
   }
 
   fun isSelected(app: AppModel): Boolean {
@@ -195,11 +196,9 @@ class ArcticRequest constructor(
     onLoaded?.invoke(LoadResult(storedLoadedApps))
   }
 
-  fun send(): Observable<SendResult> {
-    return Observable.fromCallable {
-      onSending?.invoke()
-      selectedApps
-    }
+  fun performSend() {
+    disposables += Observable.fromCallable { onSending?.invoke() }
+        .map { selectedApps }
         .flatMap { selectedApps ->
           sendInteractor.send(selectedApps, this@ArcticRequest)
               .map { Pair(selectedApps.size, it) }
@@ -207,10 +206,14 @@ class ArcticRequest constructor(
         .map { SendResult(it.first, it.second) }
         .onErrorReturn { SendResult(0, false, it) }
         .observeToMainThread()
-        .doOnNext { sendResult ->
+        .subscribe {
           resetSelection()
-          onSent?.invoke(sendResult)
+          onSent?.invoke(it)
         }
+  }
+
+  fun dispose() {
+    disposables.dispose()
   }
 
   companion object {
