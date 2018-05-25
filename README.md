@@ -5,8 +5,6 @@
 This library allows icon pack dashboards to easily send icon requests
 either traditionally via email, or through the [Arctic Manager](https://arcticmanager.com) system.
 
-This library uses RxJava, so it is completely asynchronous, and flows are customizable.
-
 <img src="https://raw.githubusercontent.com/afollestad/arctic-icon-request/master/art/showcase2.png" width="600" />
 
 ---
@@ -38,7 +36,7 @@ dependencies {
   3. [ArcticConfig](https://github.com/afollestad/arctic-icon-request#arcticconfig)
 3. [Load Unthemed Apps](https://github.com/afollestad/arctic-icon-request#loading-unthemed-apps)
 4. [Selecting Apps](https://github.com/afollestad/arctic-icon-request#selecting-apps)
-5. [Send a Request](https://github.com/afollestad/arctic-icon-request#sending-a-request)
+5. [Sending a Request](https://github.com/afollestad/arctic-icon-request#sending-a-request)
 6. [Cleanup](https://github.com/afollestad/arctic-icon-request#cleanup)
 
 ---
@@ -128,7 +126,7 @@ You can pass an `apiHost` and `apiKey` to integrate with [Arctic Request Manager
 
 ---
 
-### Loading Unthemed Apps
+# Loading Unthemed Apps
 
 With a configured `ArcticRequest` instance, you can load unthemed apps:
 
@@ -141,7 +139,7 @@ the `onLoadError` callback is invoked.
 
 ---
 
-### Selecting Apps
+# Selecting Apps
 
 Once you've loaded apps, you can select/deselect apps that are sent in a request:
 
@@ -158,7 +156,7 @@ request.deselectAll();
 
 ---
 
-### Sending a Request
+# Sending a Request
 
 Once you've selected apps, you can send a request:
 
