@@ -135,6 +135,12 @@ request.performLoad()
 Your `onLoaded` callback will receive a List of unthemed apps. If an error occurs,
 the `onLoadError` callback is invoked.
 
+After `onLoaded`, the loaded apps List will be populated:
+
+```kotlin
+val apps = request.loadedApps
+```
+
 ---
 
 # Selecting Apps
@@ -142,15 +148,24 @@ the `onLoadError` callback is invoked.
 Once you've loaded apps, you can select/deselect apps that are sent in a request:
 
 ```kotlin
-ArcticRequest request = // ...
-AppModel app = // ...
-
 request.toggleSelection(app);
+
 request.select(app);
 request.deselect(app);
+
 request.selectAll();
 request.deselectAll();
 ```
+
+You can retrieve a List of selected apps:
+
+```kotlin
+// List<AppModel>
+val apps = request.selectedApps
+```
+
+Keep in mind this method is doing a computation with every get performed on it, returning a new
+filtered list based off the list of all loaded apps.
 
 ---
 
@@ -164,6 +179,16 @@ request.performSend()
 
 Your `onSent` callback will be invoked if all is well; your `onSendError` callback
 is invoked if an error occurs.
+
+You can retrieve a List of requested apps:
+
+```kotlin
+// List<AppModel>
+val apps = request.requestedApps
+```
+
+Keep in mind this method is doing a computation with every get performed on it, returning a new
+filtered list based off the list of all loaded apps.
 
 ---
 
