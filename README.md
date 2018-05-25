@@ -31,9 +31,9 @@ dependencies {
 
 1. [Creating a Request](https://github.com/afollestad/arctic-icon-request#creating-a-request)
 2. [Options](https://github.com/afollestad/arctic-icon-request#options)
-  1. [Saved Instance State](https://github.com/afollestad/arctic-icon-request#saved-instance-state)
-  2. [UriTransformer](https://github.com/afollestad/arctic-icon-request#uritransformer)
-  3. [ArcticConfig](https://github.com/afollestad/arctic-icon-request#arcticconfig)
+    1. [Saved Instance State](https://github.com/afollestad/arctic-icon-request#saved-instance-state)
+    2. [UriTransformer](https://github.com/afollestad/arctic-icon-request#uritransformer)
+    3. [ArcticConfig](https://github.com/afollestad/arctic-icon-request#arcticconfig)
 3. [Load Unthemed Apps](https://github.com/afollestad/arctic-icon-request#loading-unthemed-apps)
 4. [Selecting Apps](https://github.com/afollestad/arctic-icon-request#selecting-apps)
 5. [Sending a Request](https://github.com/afollestad/arctic-icon-request#sending-a-request)
