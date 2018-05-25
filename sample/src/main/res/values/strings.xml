@@ -1,12 +1,12 @@
 <resources>
-    <string name="app_name">Icon Request</string>
-    <string name="app_name_x">Icon Request (%1$d)</string>
-    <string name="loading_percent">Loading… %1$d%%</string>
-    <string name="loading_filter">Loading your filter…</string>
-    <string name="select_all">Select All</string>
-    <string name="request_sent">Request sent!</string>
-    <string name="preparing_your_request">Preparing your request…</string>
-    <string name="permission_denied">You must grant permission in order to generate a request!</string>
-    <string name="already_requested">Already requested</string>
-    <string name="error">Error</string>
+  <string name="app_name">Icon Request</string>
+  <string name="app_name_x">Icon Request (%1$d)</string>
+  <string name="loading_percent">Loading… %1$d%%</string>
+  <string name="loading_filter">Loading your filter…</string>
+  <string name="select_all">Select All</string>
+  <string name="request_sent">Request sent!</string>
+  <string name="preparing_your_request">Preparing your request…</string>
+  <string name="permission_denied">You must grant permission in order to generate a request!</string>
+  <string name="already_requested">Already requested</string>
+  <string name="error">Error</string>
 </resources>

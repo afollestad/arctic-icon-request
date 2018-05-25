@@ -2,12 +2,10 @@ package com.afollestad.iconrequest.remote
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.drawable.AdaptiveIconDrawable
-import android.graphics.drawable.BitmapDrawable
 import android.os.Build.MANUFACTURER
 import android.os.Build.MODEL
 import android.os.Build.PRODUCT
-import android.os.Build.VERSION
+import android.os.Build.VERSION.RELEASE
 import com.afollestad.iconrequest.AppModel
 import com.afollestad.iconrequest.ArcticConfig
 import com.afollestad.iconrequest.ArcticRequest
@@ -17,6 +15,7 @@ import com.afollestad.iconrequest.UriTransformer
 import com.afollestad.iconrequest.extensions.dateFormat
 import com.afollestad.iconrequest.extensions.deleteRelevantChildren
 import com.afollestad.iconrequest.extensions.drawableName
+import com.afollestad.iconrequest.extensions.isNullOrEmpty
 import com.afollestad.iconrequest.extensions.log
 import com.afollestad.iconrequest.extensions.osVersionName
 import com.afollestad.iconrequest.extensions.toBitmap
@@ -29,16 +28,11 @@ import io.reactivex.Observable
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
-import org.json.JSONObject
+import okhttp3.RequestBody
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import java.io.File
 import java.util.Date
-import okhttp3.RequestBody
-
-private fun isNullOrEmpty(value: String?): Boolean {
-  return value == null || value.isEmpty()
-}
 
 /** @author Aidan Follestad (afollestad) */
 internal class RealSendInteractor(private val context: Context) : SendInteractor {
@@ -238,7 +232,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
 
     if (config.includeDeviceInfo) {
       sb.append(
-          "<br/><br/>OS: ${VERSION.RELEASE} $osVersionName<br/>Device: $MANUFACTURER $MODEL ($PRODUCT)"
+          "<br/><br/>OS: $RELEASE $osVersionName<br/>Device: $MANUFACTURER $MODEL ($PRODUCT)"
       )
       if (config.emailFooter != null) {
         sb.append("<br/>")

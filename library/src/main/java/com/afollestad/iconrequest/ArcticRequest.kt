@@ -17,9 +17,10 @@ import io.reactivex.disposables.CompositeDisposable
 import java.util.HashSet
 
 typealias UriTransformer = ((Uri) -> (Uri))?
+typealias ErrorCallback = ((Throwable) -> (Unit))?
 typealias VoidCallback = (() -> (Unit))?
-typealias LoadedCallback = ((LoadResult) -> (Unit))?
-typealias SentCallback = ((SendResult) -> (Unit))?
+typealias LoadedCallback = ((List<AppModel>) -> (Unit))?
+typealias SentCallback = ((Int) -> (Unit))?
 typealias AppCallback = ((AppModel) -> (Unit))?
 
 /** @author Aidan Follestad (afollestad) */
@@ -29,8 +30,10 @@ class ArcticRequest constructor(
   internal val config: ArcticConfig = ArcticConfig(),
   internal val uriTransformer: UriTransformer = null,
   private val onSending: VoidCallback = null,
+  private val onSendError: ErrorCallback = null,
   private val onSent: SentCallback = null,
   private val onLoading: VoidCallback = null,
+  private val onLoadError: ErrorCallback = null,
   private val onLoaded: LoadedCallback = null,
   private val onSelectionChange: AppCallback = null
 ) {
@@ -63,7 +66,7 @@ class ArcticRequest constructor(
     storedLoadedApps = loadedAppsArray?.toMutableList() ?: mutableListOf()
     if (storedLoadedApps.isNotEmpty()) {
       "Got ${storedLoadedApps.size} apps from restored instance state.".log(TAG)
-      onLoaded?.invoke(LoadResult(storedLoadedApps))
+      onLoaded?.invoke(storedLoadedApps)
     }
   }
 
@@ -74,7 +77,8 @@ class ArcticRequest constructor(
   }
 
   fun performLoad() {
-    disposables += Observable.fromCallable { onLoading?.invoke() }
+    onLoading?.invoke()
+    disposables += Observable.just(true)
         .flatMap {
           appFilterSource.load(config.appFilterName, config.errorOnInvalidDrawables)
         }
@@ -87,16 +91,18 @@ class ArcticRequest constructor(
           storedLoadedApps = newLoadedApps
           storedLoadedApps
         }
-        .map { LoadResult(it) }
-        .onErrorReturn { LoadResult(error = it) }
         .observeToMainThread()
-        .subscribe {
-          onLoaded?.invoke(it)
-        }
+        .subscribe(
+            { onLoaded?.invoke(it) },
+            {
+              if (onLoadError != null) onLoadError.invoke(it)
+              else throw RuntimeException(it)
+            }
+        )
   }
 
   fun isSelected(app: AppModel): Boolean {
-    val index = storedLoadedApps.indexOf(app)
+    val index = storedLoadedApps.indexOfFirst { it.code == app.code }
     if (index == -1) {
       throw IllegalArgumentException(
           "Unable to find app ${app.pkg} in this list of loaded apps!"
@@ -107,7 +113,7 @@ class ArcticRequest constructor(
 
   fun select(appToSelect: AppModel): ArcticRequest {
     var app = appToSelect
-    val index = storedLoadedApps.indexOf(app)
+    val index = storedLoadedApps.indexOfFirst { it.code == app.code }
     if (index == -1) {
       throw IllegalArgumentException(
           "Unable to find app ${app.pkg} in this list of loaded apps!"
@@ -125,7 +131,7 @@ class ArcticRequest constructor(
 
   fun deselect(appToDeselect: AppModel): ArcticRequest {
     var app = appToDeselect
-    val index = storedLoadedApps.indexOf(app)
+    val index = storedLoadedApps.indexOfFirst { it.code == app.code }
     if (index == -1) {
       throw IllegalArgumentException(
           "Unable to find app ${app.pkg} in this list of loaded apps!"
@@ -143,7 +149,7 @@ class ArcticRequest constructor(
 
   fun toggleSelection(appToToggle: AppModel): ArcticRequest {
     var app = appToToggle
-    val index = storedLoadedApps.indexOf(app)
+    val index = storedLoadedApps.indexOfFirst { it.code == app.code }
     if (index == -1) {
       throw IllegalArgumentException(
           "Unable to find app ${app.pkg} in this list of loaded apps!"
@@ -166,7 +172,7 @@ class ArcticRequest constructor(
       app = app.copy(selected = true)
       storedLoadedApps[i] = app
     }
-    onLoaded?.invoke(LoadResult(storedLoadedApps))
+    onLoaded?.invoke(storedLoadedApps)
     return this
   }
 
@@ -179,7 +185,7 @@ class ArcticRequest constructor(
       app = app.copy(selected = false)
       storedLoadedApps[i] = app
     }
-    onLoaded?.invoke(LoadResult(storedLoadedApps))
+    onLoaded?.invoke(storedLoadedApps)
     return this
   }
 
@@ -192,23 +198,28 @@ class ArcticRequest constructor(
       app = app.copy(selected = false, requested = true)
       storedLoadedApps[i] = app
     }
-    onLoaded?.invoke(LoadResult(storedLoadedApps))
+    onLoaded?.invoke(storedLoadedApps)
   }
 
   fun performSend() {
-    disposables += Observable.fromCallable { onSending?.invoke() }
+    onSending?.invoke()
+    disposables += Observable.just(true)
         .map { selectedApps }
         .flatMap { selectedApps ->
           sendInteractor.send(selectedApps, this@ArcticRequest)
-              .map { Pair(selectedApps.size, it) }
+              .map { selectedApps.size }
         }
-        .map { SendResult(it.first, it.second) }
-        .onErrorReturn { SendResult(0, false, it) }
         .observeToMainThread()
-        .subscribe {
-          resetSelection()
-          onSent?.invoke(it)
-        }
+        .subscribe(
+            {
+              resetSelection()
+              onSent?.invoke(it)
+            },
+            {
+              if (onSendError != null) onSendError.invoke(it)
+              else throw RuntimeException(it)
+            }
+        )
   }
 
   fun dispose() {

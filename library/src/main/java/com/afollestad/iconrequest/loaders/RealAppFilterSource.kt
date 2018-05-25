@@ -3,12 +3,18 @@ package com.afollestad.iconrequest.loaders
 import android.content.Context
 import com.afollestad.iconrequest.AppFilterSource
 import com.afollestad.iconrequest.extensions.closeQuietly
+import com.afollestad.iconrequest.extensions.isNullOrEmpty
 import com.afollestad.iconrequest.extensions.log
 import io.reactivex.Observable
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.HashSet
+
+internal fun StringBuilder.appendWithNewlinePrefix(text: String) {
+  if (isNotEmpty()) append("\n")
+  append(text)
+}
 
 /** @author Aidan Follestad (afollestad) */
 internal class RealAppFilterSource(private val context: Context) : AppFilterSource {
@@ -62,14 +68,16 @@ internal class RealAppFilterSource(private val context: Context) : AppFilterSour
     var drawable: String? = null
 
     var inComment = false
+    val lineIterator = reader.lineSequence()
+        .iterator()
 
-    var line = reader.readLine()
-    while (line != null) {
-      val trimmedLine = line.trim { it <= ' ' }
-      if (!inComment && trimmedLine.startsWith(commentStart)) {
+    while (lineIterator.hasNext()) {
+      val line = lineIterator.next()
+          .trim()
+      if (!inComment && line.startsWith(commentStart)) {
         inComment = true
       }
-      if (inComment && trimmedLine.endsWith(commentEnd)) {
+      if (inComment && line.endsWith(commentEnd)) {
         inComment = false
         continue
       }
@@ -99,18 +107,16 @@ internal class RealAppFilterSource(private val context: Context) : AppFilterSour
         "Found: $component ($drawable)".log(
             TAG
         )
-        if (drawable == null || drawable.trim { it <= ' ' }.isEmpty()) {
+        if (isNullOrEmpty(drawable)) {
           "WARNING: Drawable shouldn't be null.".log(
               TAG
           )
-          if (errorOnInvalidDrawables) {
-            if (invalidDrawables.isNotEmpty()) invalidDrawables.append("\n")
-            invalidDrawables.append("Drawable for $component was null or empty.\n")
-          }
+          if (errorOnInvalidDrawables) invalidDrawables.appendWithNewlinePrefix(
+              "Drawable for $component was null or empty.\n"
+          )
         } else {
           val r = context.resources
-          var identifier: Int
-          identifier = try {
+          val identifier = try {
             r.getIdentifier(drawable, "drawable", context.packageName)
           } catch (t: Throwable) {
             0
@@ -119,17 +125,13 @@ internal class RealAppFilterSource(private val context: Context) : AppFilterSour
             "WARNING: Drawable $drawable (for $component) doesn't match up with a resource.".log(
                 TAG
             )
-            if (errorOnInvalidDrawables) {
-              if (invalidDrawables.isNotEmpty()) invalidDrawables.append("\n")
-              invalidDrawables.append(
-                  "Drawable $drawable (for $component) doesn't match up with a resource.\n"
-              )
-            }
+            if (errorOnInvalidDrawables) invalidDrawables.append(
+                "Drawable $drawable (for $component) doesn't match up with a resource.\n"
+            )
           }
         }
         defined.add(component!!)
       }
-      line = reader.readLine()
     }
   }
 

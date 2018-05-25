@@ -18,6 +18,7 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import com.afollestad.iconrequest.ArcticConfig
 import com.afollestad.iconrequest.ArcticRequest
+import com.afollestad.iconrequest.UriTransformer
 import kotlinx.android.synthetic.main.activity_main.fab
 import kotlinx.android.synthetic.main.activity_main.list
 import kotlinx.android.synthetic.main.activity_main.progress
@@ -32,7 +33,6 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
   }
 
   private lateinit var adapter: MainAdapter
-
   private lateinit var request: ArcticRequest
 
   private fun onClickFab() {
@@ -77,30 +77,32 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
     list.layoutManager = lm
     list.adapter = adapter
 
-    val config = ArcticConfig(emailRecipient = "fake-email@helloworld.com")
+    val config =
+      ArcticConfig(emailRecipient = "fake-email@helloworld.com", errorOnInvalidDrawables = false)
+    val uriTransformer: UriTransformer = {
+      FileProvider.getUriForFile(
+          this@MainActivity,
+          BuildConfig.APPLICATION_ID + ".fileProvider",
+          File(it.path)
+      )
+    }
 
     request = ArcticRequest(
         context = this,
         savedInstanceState = savedInstanceState,
         config = config,
-        uriTransformer = {
-          FileProvider.getUriForFile(
-              this@MainActivity,
-              BuildConfig.APPLICATION_ID + ".fileProvider",
-              File(it.path)
-          )
-        },
+        uriTransformer = uriTransformer,
         onLoading = { progress.visibility = VISIBLE },
+        onLoadError = {
+          progress.visibility = GONE
+          adapter.setAppsList(null)
+          Snackbar.make(rootView, it.message!!, Snackbar.LENGTH_LONG)
+              .show()
+        },
         onLoaded = {
           progress.visibility = GONE
-          if (!it.success) {
-            adapter.setAppsList(null)
-            Snackbar.make(rootView, it.error!!.message!!, Snackbar.LENGTH_LONG)
-                .show()
-          } else {
-            adapter.setAppsList(it.apps)
-            invalidateToolbar()
-          }
+          adapter.setAppsList(it)
+          invalidateToolbar()
         },
         onSelectionChange = {
           adapter.update(it)
@@ -109,15 +111,15 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
         onSending = {
           progress.visibility = VISIBLE
         },
+        onSendError = {
+          progress.visibility = GONE
+          Snackbar.make(rootView, it.message!!, Snackbar.LENGTH_LONG)
+              .show()
+        },
         onSent = {
           progress.visibility = GONE
-          if (it.success) {
-            Snackbar.make(rootView, R.string.request_sent, Snackbar.LENGTH_SHORT)
-                .show()
-          } else {
-            Snackbar.make(rootView, it.error!!.message!!, Snackbar.LENGTH_LONG)
-                .show()
-          }
+          Snackbar.make(rootView, R.string.request_sent, Snackbar.LENGTH_SHORT)
+              .show()
         }
     )
 

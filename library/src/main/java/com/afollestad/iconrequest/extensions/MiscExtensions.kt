@@ -9,6 +9,10 @@ import com.afollestad.iconrequest.AppModel
 import io.reactivex.Observable
 import java.util.Locale
 
+fun isNullOrEmpty(value: String?): Boolean {
+  return value == null || value.isEmpty()
+}
+
 internal val osVersionName: String
   get() {
     when (Build.VERSION.SDK_INT) {
@@ -37,7 +41,7 @@ internal val osVersionName: String
       36 -> return "X"
       37 -> return "Y"
       38 -> return "Z"
-      else -> return ""
+      else -> return "Unknown"
     }
   }
 

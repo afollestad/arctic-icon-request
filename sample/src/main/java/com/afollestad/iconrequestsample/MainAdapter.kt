@@ -24,7 +24,7 @@ internal class MainAdapter : RecyclerView.Adapter<MainAdapter.MainVH>() {
 
   fun update(app: AppModel) {
     for (i in appsList.indices) {
-      if (app == appsList[i]) {
+      if (app.code == appsList[i].code) {
         appsList[i] = app
         notifyItemChanged(i)
         break

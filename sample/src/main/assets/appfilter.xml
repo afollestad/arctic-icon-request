@@ -5,10 +5,8 @@
     <scale factor="1.0" />
 
     <!-- Action Launcher -->
-    <!--
     <item
         component="ComponentInfo{com.actionlauncher.playstore/com.actionlauncher.ActionLauncherActivity}"
         drawable="action_launcher" />
-    -->
 
 </resources>
