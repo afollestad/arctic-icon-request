@@ -9,12 +9,11 @@ import com.afollestad.iconrequest.extensions.log
 import com.afollestad.iconrequest.extensions.observeToMainThread
 import com.afollestad.iconrequest.extensions.plusAssign
 import com.afollestad.iconrequest.extensions.transferStates
+import com.afollestad.iconrequest.loaders.RealAppFilterSource
+import com.afollestad.iconrequest.loaders.RealComponentInfoSource
 import com.afollestad.iconrequest.remote.RealSendInteractor
 import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.subjects.PublishSubject
-import java.util.ArrayList
 import java.util.HashSet
 
 typealias UriTransformer = ((Uri) -> (Uri))?
@@ -54,8 +53,8 @@ class ArcticRequest constructor(
     get() = storedLoadedApps.toList()
 
   init {
-    this.appFilterSource = AppFilterAssets(context)
-    this.componentInfoSource = ComponentInfoPm(context)
+    this.appFilterSource = RealAppFilterSource(context)
+    this.componentInfoSource = RealComponentInfoSource(context)
     this.sendInteractor = RealSendInteractor(context)
 
     this.loadedFilter = savedInstanceState?.getSerializable(KEY_FILTER) as? HashSet<String> ?:

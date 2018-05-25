@@ -1,6 +1,7 @@
-package com.afollestad.iconrequest
+package com.afollestad.iconrequest.loaders
 
 import android.content.Context
+import com.afollestad.iconrequest.AppFilterSource
 import com.afollestad.iconrequest.extensions.closeQuietly
 import com.afollestad.iconrequest.extensions.log
 import io.reactivex.Observable
@@ -10,7 +11,7 @@ import java.io.InputStreamReader
 import java.util.HashSet
 
 /** @author Aidan Follestad (afollestad) */
-internal class AppFilterAssets(private val context: Context) : AppFilterSource {
+internal class RealAppFilterSource(private val context: Context) : AppFilterSource {
 
   override fun load(
     filterName: String,
@@ -31,7 +32,9 @@ internal class AppFilterAssets(private val context: Context) : AppFilterSource {
               invalidDrawables.trimToSize()
               throw Exception(invalidDrawables.toString())
             }
-            "Found ${defined.size} total app(s) in your appfilter.".log(TAG)
+            "Found ${defined.size} total app(s) in your appfilter.".log(
+                TAG
+            )
           } catch (e: Throwable) {
             throw Exception("Failed to read $filterName", e)
           } finally {
@@ -93,9 +96,13 @@ internal class AppFilterAssets(private val context: Context) : AppFilterSource {
 
       start = line.indexOf(itemEndStr)
       if (start != -1 && (component != null || drawable != null)) {
-        "Found: $component ($drawable)".log(TAG)
+        "Found: $component ($drawable)".log(
+            TAG
+        )
         if (drawable == null || drawable.trim { it <= ' ' }.isEmpty()) {
-          "WARNING: Drawable shouldn't be null.".log(TAG)
+          "WARNING: Drawable shouldn't be null.".log(
+              TAG
+          )
           if (errorOnInvalidDrawables) {
             if (invalidDrawables.isNotEmpty()) invalidDrawables.append("\n")
             invalidDrawables.append("Drawable for $component was null or empty.\n")
@@ -129,7 +136,9 @@ internal class AppFilterAssets(private val context: Context) : AppFilterSource {
   private fun openInputStream(filterName: String): InputStream {
     try {
       val am = context.assets
-      "Loading your appfilter, opening: $filterName".log(TAG)
+      "Loading your appfilter, opening: $filterName".log(
+          TAG
+      )
       return am.open(filterName)
     } catch (e: Throwable) {
       throw Exception("Failed to open $filterName", e)
@@ -137,6 +146,6 @@ internal class AppFilterAssets(private val context: Context) : AppFilterSource {
   }
 
   companion object {
-    private const val TAG = "AppFilterAssets"
+    private const val TAG = "RealAppFilterSource"
   }
 }

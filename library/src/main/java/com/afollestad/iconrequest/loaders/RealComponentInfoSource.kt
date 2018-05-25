@@ -1,22 +1,26 @@
-package com.afollestad.iconrequest
+package com.afollestad.iconrequest.loaders
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import com.afollestad.iconrequest.AppModel
+import com.afollestad.iconrequest.ComponentInfoSource
 import com.afollestad.iconrequest.extensions.log
 import java.util.Collections
 import java.util.Comparator
 import java.util.HashSet
 
 /** @author Aidan Follestad (afollestad) */
-internal class ComponentInfoPm(private val context: Context) : ComponentInfoSource {
+internal class RealComponentInfoSource(private val context: Context) : ComponentInfoSource {
 
   override fun getInstalledApps(filter: HashSet<String>): MutableList<AppModel> {
     val pm = context.packageManager
     val appInfos = pm.getInstalledApplications(PackageManager.GET_META_DATA)
 
     try {
-      Collections.sort(appInfos, NameComparator(pm))
+      Collections.sort(appInfos,
+          NameComparator(pm)
+      )
     } catch (t: Throwable) {
       t.printStackTrace()
     }
@@ -49,7 +53,9 @@ internal class ComponentInfoPm(private val context: Context) : ComponentInfoSour
       apps.add(AppModel(name, launchStr, ai.packageName))
     }
 
-    "Loaded ${apps.size} total app(s), filtered out $filtered app(s).".log(TAG)
+    "Loaded ${apps.size} total app(s), filtered out $filtered app(s).".log(
+        TAG
+    )
     return apps
   }
 
@@ -69,6 +75,6 @@ internal class ComponentInfoPm(private val context: Context) : ComponentInfoSour
   }
 
   companion object {
-    private const val TAG = "ComponentInfoPm"
+    private const val TAG = "RealComponentInfoSource"
   }
 }
