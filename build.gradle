@@ -38,6 +38,10 @@ allprojects {
       endWithNewline()
     }
   }
+
+  tasks.withType(Javadoc).all {
+    enabled = false
+  }
 }
 
 dependencyUpdates.resolutionStrategy = {
