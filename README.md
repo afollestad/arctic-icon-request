@@ -98,8 +98,44 @@ override fun onSaveInstanceState(outState: Bundle) {
 
 The `uriTransformer` allows you to modify the Uri pointing to a generated ZIP file before it
 gets passed through an Intent to an email client. On newer versions of Android, apps can
-only share files through `FileProvider` Uris. See the sample project for an example of how
-you can transform a local file Uri into a `FileProvider` Uri.
+only share files through `FileProvider` Uris. Here's an example of how you can convert a Uri of a
+local file into a `FileProvider` Uri which external apps can use, this is backwards compatible as well.
+
+```kotlin
+{ file ->
+  FileProvider.getUriForFile(
+      this,
+      BuildConfig.APPLICATION_ID + ".fileProvider",
+      File(file.path)
+  )
+}
+```
+
+In order to use `FileProvider`, you'll need a file in `/res/xml` called `filepaths.xml`:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+  <cache-path name="cache" path="/"/>
+  <external-path name="external_cache" path="/"/>
+</paths>
+```
+
+Which is registered in your `AndroidManifest.xml`:
+
+```xml
+<application ...>
+  <provider
+    android:name="android.support.v4.content.FileProvider"
+    android:authorities="${applicationId}.fileProvider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+      android:name="android.support.FILE_PROVIDER_PATHS"
+      android:resource="@xml/filepaths"/>
+  </provider>
+</application>
+```
 
 ### ArcticConfig
 
