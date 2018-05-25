@@ -18,8 +18,8 @@ Add this to your module's `build.gradle` file (make sure the version matches the
 
 ```gradle
 dependencies {
-	// ... other dependencies
-	compile 'com.afollestad:icon-request:4.0.0'
+  
+  compile 'com.afollestad:icon-request:4.0.0'
 }
 ```
 
