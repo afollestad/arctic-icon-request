@@ -28,17 +28,17 @@ import java.io.File
 class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
 
   companion object {
-    private const val WRITE_EXTERNAL_STORAGE_RQ = 69;
+    private const val WRITE_EXTERNAL_STORAGE_RQ = 69
   }
 
   private lateinit var adapter: MainAdapter
 
-  private var request: ArcticRequest? = null
+  private lateinit var request: ArcticRequest
 
   private fun onClickFab() {
     val permissionGrantedOrNot = ContextCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE)
     if (permissionGrantedOrNot == PackageManager.PERMISSION_GRANTED) {
-      request!!.send()
+      request.send()
           .subscribe()
     } else {
       ActivityCompat.requestPermissions(
@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
     if (requestCode == WRITE_EXTERNAL_STORAGE_RQ && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
       onClickFab()
     } else {
-      Snackbar.make(rootView!!, R.string.permission_denied, Snackbar.LENGTH_LONG)
+      Snackbar.make(rootView, R.string.permission_denied, Snackbar.LENGTH_LONG)
           .show()
     }
   }
@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
     fab.setOnClickListener { onClickFab() }
 
     adapter = MainAdapter()
-    adapter.setListener { _, app -> request?.toggleSelection(app) }
+    adapter.setListener { _, app -> request.toggleSelection(app) }
 
     val lm = GridLayoutManager(this, resources.getInteger(R.integer.grid_width))
     list.layoutManager = lm
@@ -80,63 +80,47 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
 
     val config = ArcticConfig(emailRecipient = "fake-email@helloworld.com")
 
-    request = ArcticRequest.make(this, savedInstanceState)
-        .setConfig(config)
-        .setUriTransformer {
+    request = ArcticRequest(
+        context = this,
+        savedInstanceState = savedInstanceState,
+        config = config,
+        uriTransformer = {
           FileProvider.getUriForFile(
               this@MainActivity,
               BuildConfig.APPLICATION_ID + ".fileProvider",
               File(it.path)
           )
-        }
-
-    with(request!!) {
-      loading()
-          .subscribe {
-            progress.visibility = if (it) VISIBLE else GONE
-          }
-          .unsubscribeOnDetach(rootView)
-
-      loaded()
-          .subscribe { loadResult ->
-            if (!loadResult.success) {
-              adapter.setAppsList(null)
-              Snackbar.make(rootView!!, loadResult.error!!.message!!, Snackbar.LENGTH_LONG)
-                  .show()
-              request!!.loaded()
-                  .subscribe()
-            } else {
-              adapter.setAppsList(loadResult.apps)
-              invalidateToolbar()
-            }
-          }
-          .unsubscribeOnDetach(rootView)
-
-      selectionChange()
-          .subscribe {
-            adapter.update(it)
+        },
+        onLoading = { progress.visibility = VISIBLE },
+        onLoaded = {
+          progress.visibility = GONE
+          if (!it.success) {
+            adapter.setAppsList(null)
+            Snackbar.make(rootView, it.error!!.message!!, Snackbar.LENGTH_LONG)
+                .show()
+          } else {
+            adapter.setAppsList(it.apps)
             invalidateToolbar()
           }
-          .unsubscribeOnDetach(rootView)
-
-      sending()
-          .subscribe {
-            // TODO show inline progress indicator
+        },
+        onSelectionChange = {
+          adapter.update(it)
+          invalidateToolbar()
+        },
+        onSending = {
+          progress.visibility = VISIBLE
+        },
+        onSent = {
+          progress.visibility = GONE
+          if (it.success) {
+            Snackbar.make(rootView, R.string.request_sent, Snackbar.LENGTH_SHORT)
+                .show()
+          } else {
+            Snackbar.make(rootView, it.error!!.message!!, Snackbar.LENGTH_LONG)
+                .show()
           }
-          .unsubscribeOnDetach(rootView)
-
-      sent()
-          .subscribe {
-            if (it.success) {
-              Snackbar.make(rootView!!, R.string.request_sent, Snackbar.LENGTH_SHORT)
-                  .show()
-            } else {
-              Snackbar.make(rootView!!, it.error!!.message!!, Snackbar.LENGTH_LONG)
-                  .show()
-            }
-          }
-          .unsubscribeOnDetach(rootView)
-    }
+        }
+    )
 
     if (SDK_INT >= VERSION_CODES.O) {
       var flags = window.decorView.systemUiVisibility
@@ -147,14 +131,14 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
 
   override fun onResume() {
     super.onResume()
-    if (request!!.getLoadedApps().isEmpty()) {
-      request!!.load()
+    if (request.getLoadedApps().isEmpty()) {
+      request.load()
           .subscribe()
     }
   }
 
   private fun invalidateToolbar() {
-    request!!
+    request
         .selectedApps
         .subscribe { appModels ->
           val selectedCount = appModels.size
@@ -178,22 +162,17 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
   }
 
   override fun onSaveInstanceState(outState: Bundle) {
-    request!!.saveInstance(outState)
+    request.saveInstance(outState)
     super.onSaveInstanceState(outState)
-  }
-
-  override fun onDestroy() {
-    super.onDestroy()
-    request = null
   }
 
   override fun onMenuItemClick(item: MenuItem): Boolean {
     if (item.itemId == R.id.selectAllNone) {
-      if (!request!!.selectedApps.blockingGet().isEmpty()) {
-        request!!.deselectAll()
+      if (!request.selectedApps.blockingGet().isEmpty()) {
+        request.deselectAll()
         item.setIcon(R.drawable.ic_action_selectall)
       } else {
-        request!!.selectAll()
+        request.selectAll()
         item.setIcon(R.drawable.ic_action_selectnone)
       }
       return true

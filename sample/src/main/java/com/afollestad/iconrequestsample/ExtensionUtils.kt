@@ -58,11 +58,6 @@ private class AttachedSubscriptions : View.OnAttachStateChangeListener {
   }
 
   override fun onViewDetachedFromWindow(v: View) = subs.clear()
-
-  fun clearAllSubscriptions() {
-    subscriptionFactories.clear()
-    subs.clear()
-  }
 }
 
 fun Disposable.unsubscribeOnDetach(view: View) {
