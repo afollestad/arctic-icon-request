@@ -7,7 +7,7 @@ import java.io.Serializable
 
 /** @author Aidan Follestad (afollestad) */
 data class ArcticConfig(
-  private val cacheFolder: String? = null,
+  private val cacheFolder: File? = null,
   val appFilterName: String = "appfilter.xml",
   val emailRecipient: String? = null,
   val emailSubject: String? = "Icon Request",
@@ -17,12 +17,8 @@ data class ArcticConfig(
   val errorOnInvalidDrawables: Boolean = true,
   val apiHost: String? = null,
   val apiKey: String? = null
-): Serializable {
+) : Serializable {
   fun actualCacheFolder(context: Context): File {
-    return if (cacheFolder == null) {
-      File(context.externalCacheDir, "com.afollestad.arctic").wipe()
-    } else {
-      File(cacheFolder).wipe()
-    }
+    return cacheFolder?.wipe() ?: File(context.externalCacheDir, "com.afollestad.arctic").wipe()
   }
 }

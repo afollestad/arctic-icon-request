@@ -1,5 +1,7 @@
 # Icon Request
 
+**Note: this doc currently represents the state of the upcoming release.**
+
 This library allows icon pack dashboards to easily send icon requests
 either traditionally via email, or through the [Arctic Manager](https://arcticmanager.com) system.
 
@@ -29,80 +31,121 @@ dependencies {
 
 # Table of Contents
 
-1. [Getting Started](https://github.com/afollestad/arctic-icon-request#getting-started)
-    1. [Instantiate a Request](https://github.com/afollestad/arctic-icon-request#instantiating-a-request)
-    2. [Configure a Request](https://github.com/afollestad/arctic-icon-request#configuring-a-request)
-    3. [Load Unthemed Apps](https://github.com/afollestad/arctic-icon-request#loading-unthemed-apps)
-    4. [Selecting Apps](https://github.com/afollestad/arctic-icon-request#selecting-apps)
-    5. [Send a Request](https://github.com/afollestad/arctic-icon-request#sending-a-request)
-3. [Events](https://github.com/afollestad/arctic-icon-request#events)
-    1. [Loading](https://github.com/afollestad/arctic-icon-request#loading)
-    2. [Loaded](https://github.com/afollestad/arctic-icon-request#loaded)
-    3. [Selection Change](https://github.com/afollestad/arctic-icon-request#selection-change)
-    4. [Sending](https://github.com/afollestad/arctic-icon-request#sending)
-    5. [Sent](https://github.com/afollestad/arctic-icon-request#sent)
+1. [Creating a Request](https://github.com/afollestad/arctic-icon-request#creating-a-request)
+2. [Options](https://github.com/afollestad/arctic-icon-request#options)
+  1. [Saved Instance State](https://github.com/afollestad/arctic-icon-request#saved-instance-state)
+  2. [UriTransformer](https://github.com/afollestad/arctic-icon-request#uritransformer)
+  3. [ArcticConfig](https://github.com/afollestad/arctic-icon-request#arcticconfig)
+3. [Load Unthemed Apps](https://github.com/afollestad/arctic-icon-request#loading-unthemed-apps)
+4. [Selecting Apps](https://github.com/afollestad/arctic-icon-request#selecting-apps)
+5. [Send a Request](https://github.com/afollestad/arctic-icon-request#sending-a-request)
+6. [Cleanup](https://github.com/afollestad/arctic-icon-request#cleanup)
 
 ---
 
-# Getting Started
+# Creating a Request
 
-### Instantiating a Request
+To create a new Request object, you use the simple constructor. The only *required*
+parameter is a `Context`.
 
-To create a new Request object, you use the static `make(Context, Bundle)` method. Generally, you'd 
-want to call this on `onCreate(Bundle)` of an `Activity` or `Fragment`.
-
-```java
-ArcticRequest request = ArcticRequest.make(this, savedInstanceState)
+```kotlin
+val request = ArcticRequest(this)
 ```
 
-### Configuring a Request
+---
 
-Configuration uses a builder class called `ArcticConfig`:
+# Options
 
-```java
-ArcticConfig config = ArcticConfig.create(this)
-    .apiHost("https://your-server.com") // optional, specify for Request Manager usage
-    .apiKey("1234") // optional, specify for Request Manager usage
-    .emailRecipient("helloworld@hi.com") // required IF you don't specify an API key
-    .appFilterName("appfilter.xml")
-    .cacheFolder(getCacheDir().getAbsolutePath())
-    .errorOnInvalidDrawables(true)
-    .includeDeviceInfo(true)
-    .emailSubject("New Icon Request")
-    .emailHeader("These apps are unthemed!")
-    .emailFooter("Thank you!")
-    .build();
+There are more optional parameters that you can pass:
+
+```kotlin
+val request = ArcticRequest(
+  context = this,
+  savedInstanceState = savedInstanceState,
+  config = config,
+  uriTransformer = uriTransformer,
+  onLoading = { },
+  onLoadError = {
+     // `it` is a Throwable
+  },
+  onLoaded = {
+    // `it` is a List<AppModel>
+  },
+  onSelectionChange = {
+    // `it` is a AppModel
+  },
+  onSending = { },
+  onSendError = {
+    // `it` is a Throwable
+  },
+  onSent = {
+    // `it` is an Int (how many apps were sent)
+  }
+)
 ```
 
-You can pass an instance of this class to `ArcticRequest`:
+### Saved Instance State
 
-```java
-ArcticRequest request = // ...
-request.config(config);
+Above, `savedInstanceState` is a `Bundle` received from `onCreate(...)` in your Activity
+or Fragment which is used to restore your appfilter and app list state when recreating
+your UI (e.g. after screen rotation). But you also need to make use of `saveInstanceState`
+in order for that to work.
+
+```kotlin
+override fun onSaveInstanceState(outState: Bundle) {
+  request.saveInstance(outState)
+  super.onSaveInstanceState(outState)
+}
 ```
+
+### UriTransformer
+
+The `uriTransformer` allows you to modify the Uri pointing to a generated ZIP file before it
+gets passed through an Intent to an email client. On newer versions of Android, apps can
+only share files through `FileProvider` Uris. See the sample project for an example of how
+you can transform a local file Uri into a `FileProvider` Uri.
+
+### ArcticConfig
+
+The `config` takes an `ArcticConfig` instance which has various optional parameters:
+
+```kotlin
+val config = ArcticConfig(
+    cacheFolder = File(externalCacheDir, "com.afollestad.arctic"),
+    appFilterName = "appfilter.xml",
+    emailRecipient = "fake-email@helloworld.com",
+    emailSubject = "Icon Request",
+    emailHeader = "These apps aren't themed on my device!",
+    emailFooter = "Hello world",
+    includeDeviceInfo = true,
+    errorOnInvalidDrawables = true,
+    apiHost = "arcticmanager.com",
+    apiKey = "ojtopiu23rp9u34p0iu43-9i4"
+)
+```
+
+You can pass an `apiHost` and `apiKey` to integrate with [Arctic Request Manager](https://arcticmanager.com).
+
+---
 
 ### Loading Unthemed Apps
 
 With a configured `ArcticRequest` instance, you can load unthemed apps:
 
-```java
-request.load()
-    .subscribe(loadResult -> {
-      if(loadResult.success()) {
-        List<AppModel> loadedApps = loadResult.apps();
-        // Use apps
-      } else {
-        Exception error = loadResult.error();
-        // Use error
-      }
-    });
+```kotlin
+request.performLoad()
 ```
+
+Your `onLoaded` callback will receive a List of unthemed apps. If an error occurs,
+the `onLoadError` callback is invoked.
+
+---
 
 ### Selecting Apps
 
 Once you've loaded apps, you can select/deselect apps that are sent in a request:
 
-```java
+```kotlin
 ArcticRequest request = // ...
 AppModel app = // ...
 
@@ -113,101 +156,30 @@ request.selectAll();
 request.deselectAll();
 ```
 
+---
+
 ### Sending a Request
 
 Once you've selected apps, you can send a request:
 
-```java
-request.send()
-    .subscribe(sendResult -> {
-      if(sendResult.success()) {
-        int sentCount = sendResult.sentCount();
-        boolean usedArcticRm = sendResult.usedArcticRm();
-        // Use result?
-      } else {
-        Exception error = sendResult.error();
-        // Use error
-      }
-    });
+```kotlin
+request.performSend()
 ```
+
+Your `onSent` callback will be invoked if all is well; your `onSendError` callback
+is invoked if an error occurs.
 
 ---
 
-# Events
+# Cleanup
 
-### Loading
- 
-This event is triggered when the library begins loading apps, and again when it's done. It's a toggle event.
+When appropriate, you should call `dispose()` on your request object. This will let
+go of any pending actions that could result in memory leaks, or accessing your UI views
+after your app is in the background.
 
-```java
-request.loading()
-    .subscribe(isLoading -> {
-      // Update progress indicator or something
-    });
-```
- 
-### Loaded
-
-This event is triggered after `loading()` receives `false`, it contains the actual loaded apps. 
-The same data is received directly from `request.load()`, also. 
-
-```java
-request.loaded()
-    .subscribe(loadResult -> {
-      if (loadResult.success()) {
-        List<AppModel> apps = loadResult.apps();
-        // Use apps
-      } else {
-        Exception error = loadResult.error();
-        // Use error
-      }
-    });
-```
-
-This event is also triggered when you use `selectAll()` or `deselectAll()` since it is more efficient
- than sending a selection event for every single changed app.
-
-
-### Selection Change
-
-This event is triggered when a single app is selected or deselected.
-
-```java
-request.selectionChange()
-    .subscribe(appModel -> {
-      boolean selected = appModel.selected();
-      // Use new state
-    });
-```
-
-### Sending
-
-This event is triggered when the library begins generating/sending a request, and again when it's done. 
-It's a toggle event.
-
-
-```java
-request.sending()
-    .subscribe(isSending -> {
-      // Update progress indicator or something
-    });
-```
-
-### Sent
-
-This event is triggered after `sending()` receives `false`, it contains the actual send result. 
-The same data is received directly from `request.send()` also.
-
-```java
-request.sent()
-    .subscribe(sendResult -> {
-      if(sendResult.success()) {
-        int sentCount = sendResult.sentCount();
-        boolean usedArcticRm = sendResult.usedArcticRm();
-        // Use result?
-      } else {
-        Exception error = sendResult.error();
-        // Use error
-      }
-    });
+```kotlin
+override fun onPause() {
+  request.dispose()
+  super.onPause()
+}
 ```
