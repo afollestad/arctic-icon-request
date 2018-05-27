@@ -22,6 +22,8 @@ typealias VoidCallback = (() -> (Unit))?
 typealias LoadedCallback = ((List<AppModel>) -> (Unit))?
 typealias SentCallback = ((Int) -> (Unit))?
 typealias AppCallback = ((AppModel) -> (Unit))?
+typealias LoadedAndErrorCallback = ((List<AppModel>, Throwable?) -> (Unit))?
+typealias SentAndErrorCallback = ((Int, Throwable?) -> (Unit))?
 
 /** @author Aidan Follestad (afollestad) */
 class ArcticRequest constructor(
@@ -76,7 +78,7 @@ class ArcticRequest constructor(
     out.putSerializable(KEY_APPS, storedLoadedApps.toTypedArray())
   }
 
-  fun performLoad() {
+  fun performLoad(callback: LoadedAndErrorCallback = null) {
     onLoading?.invoke()
     disposables += Observable.just(true)
         .flatMap {
@@ -93,10 +95,15 @@ class ArcticRequest constructor(
         }
         .observeToMainThread()
         .subscribe(
-            { onLoaded?.invoke(it) },
             {
-              if (onLoadError != null) onLoadError.invoke(it)
-              else throw RuntimeException(it)
+              onLoaded?.invoke(it)
+              callback?.invoke(it, null)
+            },
+            {
+              if (onLoadError != null || callback != null) {
+                onLoadError?.invoke(it)
+                callback?.invoke(listOf(), it)
+              } else throw RuntimeException(it)
             }
         )
   }
@@ -201,7 +208,7 @@ class ArcticRequest constructor(
     onLoaded?.invoke(storedLoadedApps)
   }
 
-  fun performSend() {
+  fun performSend(callback: SentAndErrorCallback = null) {
     onSending?.invoke()
     disposables += Observable.just(true)
         .map { selectedApps }
@@ -214,10 +221,13 @@ class ArcticRequest constructor(
             {
               resetSelection()
               onSent?.invoke(it)
+              callback?.invoke(it, null)
             },
             {
-              if (onSendError != null) onSendError.invoke(it)
-              else throw RuntimeException(it)
+              if (onSendError != null || callback != null) {
+                onSendError?.invoke(it)
+                callback?.invoke(0, it)
+              } else throw RuntimeException(it)
             }
         )
   }

@@ -19,7 +19,7 @@ Add this to your module's `build.gradle` file (make sure the version matches the
 ```gradle
 dependencies {
   
-  compile 'com.afollestad:icon-request:4.0.0'
+  compile 'com.afollestad:icon-request:4.0.1'
 }
 ```
 
@@ -165,7 +165,13 @@ You can pass an `apiHost` and `apiKey` to integrate with [Arctic Request Manager
 With a configured `ArcticRequest` instance, you can load unthemed apps:
 
 ```kotlin
+// Rely on only the onLoad and onLoadError callbacks passed into ArcticRequest(...).
+// If onLoadError isn't set, an error will result in a thrown RuntimeException.
 request.performLoad()
+
+// You will still receive onLoad and onLoadError notifications, but the result is also passed
+// into the parameterized lambda.
+request.performLoad { list, throwable ->  }
 ```
 
 Your `onLoaded` callback will receive a List of unthemed apps. If an error occurs,
@@ -210,7 +216,13 @@ filtered list based off the list of all loaded apps.
 Once you've selected apps, you can send a request:
 
 ```kotlin
+// Rely on only the onSent and onSendError callbacks passed into ArcticRequest(...).
+// If onSendError isn't set, an error will result in a thrown RuntimeException.
 request.performSend()
+
+// You will still receive onSent and onSendError notifications, but the result is also passed
+// into the parameterized lambda.
+request.performSend { count, throwable ->  }
 ```
 
 Your `onSent` callback will be invoked if all is well; your `onSendError` callback
