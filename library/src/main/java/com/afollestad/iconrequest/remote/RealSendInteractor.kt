@@ -255,7 +255,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
           .newBuilder()
           .addHeader("TokenID", apiToken)
           .addHeader("Accept", "application/json")
-          .addHeader("User-Agent", "afollestad/arctic-icon-request")
+          .addHeader("User-Agent", "afollestad/icon-request")
           .build()
       chain.proceed(request)
     }
