@@ -1,8 +1,8 @@
 ext.versions = [
     minSdk        : 14,
     compileSdk    : 27,
-    publishVersion: '4.0.2',
-    versionCode   : 6,
+    publishVersion: '4.0.3',
+    versionCode   : 7,
     kotlin        : '1.2.41',
 
     versionsPlugin: '0.17.0',
@@ -16,5 +16,6 @@ ext.versions = [
     rxJava        : '2.1.13',
     rxAndroid     : '2.0.2',
     glide         : '4.7.1',
-    retrofit      : '2.4.0'
+    retrofit      : '2.4.0',
+    gson          : '2.8.4'
 ]

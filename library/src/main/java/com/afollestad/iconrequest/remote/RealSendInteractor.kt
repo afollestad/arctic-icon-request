@@ -24,6 +24,8 @@ import com.afollestad.iconrequest.extensions.toUri
 import com.afollestad.iconrequest.extensions.writeAll
 import com.afollestad.iconrequest.extensions.writeIconTo
 import com.afollestad.iconrequest.extensions.zipInto
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import io.reactivex.Observable
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -31,6 +33,7 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.util.Date
 
@@ -201,10 +204,16 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
       val archiveFile = MultipartBody.Part.createFormData("archive", "icons.zip", archiveFileBody)
       val appsJson = MultipartBody.Part.createFormData("apps", jsonSb.toString())
       api.performRequest(archiveFile, appsJson)
+          .flatMap {
+            if (it.status == "error") {
+              Observable.error(Exception(it.error))
+            } else {
+              Observable.just(true)
+            }
+          }
           .doOnNext {
             "Request uploaded to the server!".log(TAG)
           }
-          .map { true }
     } else {
       launchIntent(zipFile, request.uriTransformer, config, selectedApps)
     }
@@ -259,10 +268,15 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
           .build()
       chain.proceed(request)
     }
+    val gson = GsonBuilder()
+        .serializeNulls()
+        .registerTypeAdapter(ApiResponse::class.java, ApiTypeAdapter())
+        .create()
     val retrofit = Retrofit.Builder()
         .baseUrl(host)
         .client(httpClient.build())
         .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+        .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
     return retrofit.create(RequestManagerApi::class.java)
   }
