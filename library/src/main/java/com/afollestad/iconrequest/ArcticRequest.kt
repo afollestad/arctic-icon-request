@@ -219,11 +219,13 @@ class ArcticRequest constructor(
         .observeToMainThread()
         .subscribe(
             {
+              "Request sent successfully!".log(TAG)
               resetSelection()
               onSent?.invoke(it)
               callback?.invoke(it, null)
             },
             {
+              "Failed to send the request! ${it.message}".log(TAG)
               if (onSendError != null || callback != null) {
                 onSendError?.invoke(it)
                 callback?.invoke(0, it)

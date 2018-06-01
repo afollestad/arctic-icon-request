@@ -203,6 +203,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
       val archiveFileBody = RequestBody.create(MediaType.parse("multipart/form-data"), zipFile)
       val archiveFile = MultipartBody.Part.createFormData("archive", "icons.zip", archiveFileBody)
       val appsJson = MultipartBody.Part.createFormData("apps", jsonSb.toString())
+      "Uploading request to ${config.apiHost}...".log(TAG)
       api.performRequest(archiveFile, appsJson)
           .flatMap {
             if (it.status == "error") {
@@ -211,10 +212,8 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
               Observable.just(true)
             }
           }
-          .doOnNext {
-            "Request uploaded to the server!".log(TAG)
-          }
     } else {
+      "Launching share intent...".log(TAG)
       launchIntent(zipFile, request.uriTransformer, config, selectedApps)
     }
   }
