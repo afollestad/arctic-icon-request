@@ -8,6 +8,7 @@ import android.os.Bundle
 import com.afollestad.iconrequest.extensions.log
 import com.afollestad.iconrequest.extensions.observeToMainThread
 import com.afollestad.iconrequest.extensions.plusAssign
+import com.afollestad.iconrequest.extensions.toArrayList
 import com.afollestad.iconrequest.extensions.transferStates
 import com.afollestad.iconrequest.loaders.RealAppFilterSource
 import com.afollestad.iconrequest.loaders.RealComponentInfoSource
@@ -66,8 +67,9 @@ class ArcticRequest constructor(
 
     this.loadedFilter = savedInstanceState?.getSerializable(KEY_FILTER) as? HashSet<String> ?:
         HashSet(0)
-    val loadedAppsArray = savedInstanceState?.getSerializable(KEY_APPS) as? Array<AppModel>
-    storedLoadedApps = loadedAppsArray?.toMutableList() ?: mutableListOf()
+
+    val restoredApps = savedInstanceState?.getParcelableArrayList<AppModel>(KEY_APPS)
+    storedLoadedApps = restoredApps?.toMutableList() ?: mutableListOf()
     if (storedLoadedApps.isNotEmpty()) {
       "Got ${storedLoadedApps.size} apps from restored instance state.".log(TAG)
       onLoaded?.invoke(storedLoadedApps)
@@ -77,7 +79,7 @@ class ArcticRequest constructor(
   fun saveInstance(out: Bundle?) {
     if (out == null) return
     out.putSerializable(KEY_FILTER, loadedFilter)
-    out.putSerializable(KEY_APPS, storedLoadedApps.toTypedArray())
+    out.putParcelableArrayList(KEY_APPS, storedLoadedApps.toArrayList())
   }
 
   fun performLoad(callback: LoadedAndErrorCallback = null) {

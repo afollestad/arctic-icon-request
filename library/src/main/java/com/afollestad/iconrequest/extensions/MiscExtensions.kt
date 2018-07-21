@@ -74,3 +74,7 @@ internal fun String.toHtml(): Spanned {
     Html.fromHtml(this)
   }
 }
+
+internal fun <T> MutableList<T>.toArrayList(): java.util.ArrayList<T> {
+  return java.util.ArrayList(this)
+}
