@@ -78,9 +78,12 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
     list.adapter = adapter
 
     val config =
-      ArcticConfig(emailRecipient = "fake-email@helloworld.com", errorOnInvalidDrawables = false,
+      ArcticConfig(
+          emailRecipient = "fake-email@helloworld.com",
+          errorOnInvalidDrawables = false,
           apiHost = "https://arcticmanager.com",
-          apiKey = "helloworld")
+          apiKey = "fb964410-0230-4f2b-ac32-4625f3c2929c"
+      )
     val uriTransformer: UriTransformer = {
       FileProvider.getUriForFile(
           this@MainActivity,

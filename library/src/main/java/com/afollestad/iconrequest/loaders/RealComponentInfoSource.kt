@@ -18,7 +18,8 @@ internal class RealComponentInfoSource(private val context: Context) : Component
     val appInfos = pm.getInstalledApplications(PackageManager.GET_META_DATA)
 
     try {
-      Collections.sort(appInfos,
+      Collections.sort(
+          appInfos,
           NameComparator(pm)
       )
     } catch (t: Throwable) {

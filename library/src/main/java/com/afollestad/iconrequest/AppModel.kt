@@ -6,6 +6,9 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
+import android.os.Parcel
+import android.os.Parcelable
+import android.os.Parcelable.Creator
 import com.afollestad.iconrequest.extensions.closeQuietly
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -18,7 +21,16 @@ data class AppModel(
   val pkg: String,
   val requested: Boolean = false,
   val selected: Boolean = false
-) {
+) : Parcelable {
+
+  constructor(parcel: Parcel) : this(
+      parcel.readString(),
+      parcel.readString(),
+      parcel.readString(),
+      parcel.readByte() != 0.toByte(),
+      parcel.readByte() != 0.toByte()
+  )
+
   private fun getAppInfo(context: Context): ApplicationInfo? {
     return try {
       context.packageManager.getApplicationInfo(pkg, 0);
@@ -48,6 +60,31 @@ data class AppModel(
       return ByteArrayInputStream(os.toByteArray())
     } finally {
       os?.closeQuietly()
+    }
+  }
+
+  override fun writeToParcel(
+    parcel: Parcel,
+    flags: Int
+  ) {
+    parcel.writeString(name)
+    parcel.writeString(code)
+    parcel.writeString(pkg)
+    parcel.writeByte(if (requested) 1 else 0)
+    parcel.writeByte(if (selected) 1 else 0)
+  }
+
+  override fun describeContents(): Int {
+    return 0
+  }
+
+  companion object CREATOR : Creator<AppModel> {
+    override fun createFromParcel(parcel: Parcel): AppModel {
+      return AppModel(parcel)
+    }
+
+    override fun newArray(size: Int): Array<AppModel?> {
+      return arrayOfNulls(size)
     }
   }
 }

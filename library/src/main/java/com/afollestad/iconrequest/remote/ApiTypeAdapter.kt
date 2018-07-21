@@ -30,10 +30,10 @@ class ApiTypeAdapter : TypeAdapter<ApiResponse>() {
     var status = "success"
     var error: String? = null
     while (input.hasNext()) {
-      val next = input.nextString()
-      when (next) {
-        "status" -> status = next
-        "error" -> error = next
+      val name = input.nextName()
+      when (name) {
+        "status" -> status = input.nextString()
+        "error" -> error = input.nextString()
       }
     }
     input.endObject()

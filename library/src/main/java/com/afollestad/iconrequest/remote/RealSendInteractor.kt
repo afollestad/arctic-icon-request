@@ -200,7 +200,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
     // Send request to the backend server
     return if (isRemote) {
       val api = createApi(config.apiHost!!, config.apiKey!!)
-      val archiveFileBody = RequestBody.create(MediaType.parse("multipart/form-data"), zipFile)
+      val archiveFileBody = RequestBody.create(MediaType.parse("application/zip"), zipFile)
       val archiveFile = MultipartBody.Part.createFormData("archive", "icons.zip", archiveFileBody)
       val appsJson = MultipartBody.Part.createFormData("apps", jsonSb.toString())
       "Uploading request to ${config.apiHost}...".log(TAG)
@@ -267,15 +267,12 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
           .build()
       chain.proceed(request)
     }
-    val gson = GsonBuilder()
-        .serializeNulls()
-        .registerTypeAdapter(ApiResponse::class.java, ApiTypeAdapter())
-        .create()
+
     val retrofit = Retrofit.Builder()
         .baseUrl(host)
         .client(httpClient.build())
         .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-        .addConverterFactory(GsonConverterFactory.create(gson))
+        .addConverterFactory(GsonConverterFactory.create(getGson()))
         .build()
     return retrofit.create(RequestManagerApi::class.java)
   }
@@ -311,5 +308,16 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
 
   companion object {
     private const val TAG = "RealSendInteractor"
+    private var gson: Gson? = null
+
+    fun getGson(): Gson {
+      if (gson == null) {
+        gson = GsonBuilder()
+            .serializeNulls()
+            .registerTypeAdapter(ApiResponse::class.java, ApiTypeAdapter())
+            .create()
+      }
+      return gson!!
+    }
   }
 }

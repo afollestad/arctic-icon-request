@@ -11,9 +11,11 @@ import com.afollestad.iconrequest.extensions.plusAssign
 import com.afollestad.iconrequest.extensions.transferStates
 import com.afollestad.iconrequest.loaders.RealAppFilterSource
 import com.afollestad.iconrequest.loaders.RealComponentInfoSource
+import com.afollestad.iconrequest.remote.ApiResponse
 import com.afollestad.iconrequest.remote.RealSendInteractor
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
+import retrofit2.HttpException
 import java.util.HashSet
 
 typealias UriTransformer = ((Uri) -> (Uri))?
@@ -208,6 +210,41 @@ class ArcticRequest constructor(
     onLoaded?.invoke(storedLoadedApps)
   }
 
+  private fun processError(
+    error: Throwable,
+    callback: SentAndErrorCallback
+  ) {
+    if (error is HttpException) {
+
+      val errorBody = error.response().errorBody()!!.string()
+      if (errorBody.isEmpty()) {
+        val errorEx = IllegalStateException("HTTP Status ${error.response().code()}")
+        if (onSendError != null || callback != null) {
+          onSendError?.invoke(errorEx)
+          callback?.invoke(0, errorEx)
+          return
+        } else throw RuntimeException(errorEx)
+      }
+
+      val errorResponse = RealSendInteractor.getGson()
+          .fromJson(errorBody, ApiResponse::class.java)
+      "Got an error response from the API! ${errorResponse.error}".log(TAG)
+      val errorEx = Exception(errorResponse.error)
+      if (onSendError != null || callback != null) {
+        onSendError?.invoke(errorEx)
+        callback?.invoke(0, errorEx)
+      } else throw RuntimeException(errorEx)
+
+      return
+    }
+
+    "Failed to send the request! ${error.message}".log(TAG)
+    if (onSendError != null || callback != null) {
+      onSendError?.invoke(error)
+      callback?.invoke(0, error)
+    } else throw RuntimeException(error)
+  }
+
   fun performSend(callback: SentAndErrorCallback = null) {
     onSending?.invoke()
     disposables += Observable.just(true)
@@ -224,13 +261,7 @@ class ArcticRequest constructor(
               onSent?.invoke(it)
               callback?.invoke(it, null)
             },
-            {
-              "Failed to send the request! ${it.message}".log(TAG)
-              if (onSendError != null || callback != null) {
-                onSendError?.invoke(it)
-                callback?.invoke(0, it)
-              } else throw RuntimeException(it)
-            }
+            { processError(it, callback) }
         )
   }
 
