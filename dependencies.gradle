@@ -3,18 +3,18 @@ ext.versions = [
     compileSdk    : 28,
     publishVersion: '4.1.0',
     versionCode   : 8,
-    kotlin        : '1.2.70',
+    buildTools    : '28.0.3',
 
+    kotlin        : '1.2.71',
     versionsPlugin: '0.20.0',
     bintrayRelease: '0.8.1',
-    buildTools    : '28.0.2',
-    gradlePlugin  : '3.2.0',
+    gradlePlugin  : '3.1.4',
     spotlessPlugin: '3.15.0',
 
-    supportLib    : '28.0.+',
+    androidx      : '1.0.0',
     rxJava        : '2.2.2',
     rxAndroid     : '2.1.0',
-    glide         : '4.7.1',
+    glide         : '4.8.0',
     retrofit      : '2.4.0',
     gson          : '2.8.5'
 ]

@@ -1,5 +1,5 @@
 apply from: './dependencies.gradle'
-apply plugin: 'com.github.ben-manes.versions'
+apply from: './versionsPlugin.gradle'
 
 buildscript {
   apply from: './dependencies.gradle'
@@ -23,36 +23,7 @@ allprojects {
     jcenter()
   }
 
-  buildscript {
-    repositories {
-      google()
-    }
-  }
-  apply plugin: "com.diffplug.gradle.spotless"
-  spotless {
-    java {
-      target "**/*.java"
-      trimTrailingWhitespace()
-      removeUnusedImports()
-      googleJavaFormat()
-      endWithNewline()
-    }
-  }
-
   tasks.withType(Javadoc).all {
     enabled = false
-  }
-}
-
-dependencyUpdates.resolutionStrategy = {
-  componentSelection { rules ->
-    rules.all { ComponentSelection selection ->
-      boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm'].any { qualifier ->
-        selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
-      }
-      if (rejected) {
-        selection.reject('Release candidate')
-      }
-    }
   }
 }

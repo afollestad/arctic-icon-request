@@ -1,9 +1,14 @@
+/*
+ * Licensed under Apache-2.0
+ *
+ * Designed and developed by Aidan Follestad (@afollestad)
+ */
 package com.afollestad.iconrequestsample
 
-import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.iconrequest.AppModel
 import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.list_item_app.view.icon

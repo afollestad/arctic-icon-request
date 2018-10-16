@@ -1,3 +1,8 @@
+/*
+ * Licensed under Apache-2.0
+ *
+ * Designed and developed by Aidan Follestad (@afollestad)
+ */
 package com.afollestad.iconrequest.extensions
 
 import android.net.Uri
@@ -44,9 +49,9 @@ internal fun Closeable.closeQuietly() {
 
 internal fun File.deleteRelevantChildren() {
   for (fi in this.listFiles()) {
-    if (!fi.isDirectory && (fi.name.endsWith(".png")
-            || fi.name.endsWith(".xml")
-            || fi.name.endsWith(".json"))
+    if (!fi.isDirectory && (fi.name.endsWith(".png") ||
+            fi.name.endsWith(".xml") ||
+            fi.name.endsWith(".json"))
     ) {
       if (fi.delete()) {
         "Deleted: ${fi.absolutePath}".log("DeleteRelevantChildren")

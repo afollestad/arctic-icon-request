@@ -1,3 +1,8 @@
+/*
+ * Licensed under Apache-2.0
+ *
+ * Designed and developed by Aidan Follestad (@afollestad)
+ */
 package com.afollestad.iconrequest.extensions
 
 import java.io.File
@@ -18,7 +23,7 @@ internal fun Collection<File>.zipInto(
     for (fi in this) {
       outputStream.putNextEntry(ZipEntry(fi.name))
       inputStream = FileInputStream(fi)
-      inputStream.copyTo(outputStream, 2048);
+      inputStream.copyTo(outputStream, 2048)
       inputStream.closeQuietly()
       outputStream.closeEntry()
     }

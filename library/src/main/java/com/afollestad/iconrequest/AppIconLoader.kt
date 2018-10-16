@@ -1,3 +1,8 @@
+/*
+ * Licensed under Apache-2.0
+ *
+ * Designed and developed by Aidan Follestad (@afollestad)
+ */
 package com.afollestad.iconrequest
 
 import android.content.Context
@@ -39,7 +44,6 @@ internal class AppIconLoader(private val context: Context) : ModelLoader<AppMode
       } catch (e: Exception) {
         callback.onLoadFailed(e)
       }
-
     }
 
     override fun cleanup() {

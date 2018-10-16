@@ -1,3 +1,8 @@
+/*
+ * Licensed under Apache-2.0
+ *
+ * Designed and developed by Aidan Follestad (@afollestad)
+ */
 package com.afollestad.iconrequestsample
 
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE

@@ -1,3 +1,8 @@
+/*
+ * Licensed under Apache-2.0
+ *
+ * Designed and developed by Aidan Follestad (@afollestad)
+ */
 @file:Suppress("unused")
 
 package com.afollestad.iconrequest
@@ -65,8 +70,8 @@ class ArcticRequest constructor(
     this.componentInfoSource = RealComponentInfoSource(context)
     this.sendInteractor = RealSendInteractor(context)
 
-    this.loadedFilter = savedInstanceState?.getSerializable(KEY_FILTER) as? HashSet<String> ?:
-        HashSet(0)
+    this.loadedFilter = savedInstanceState?.getSerializable(KEY_FILTER) as? HashSet<String>
+        ?: HashSet(0)
 
     val restoredApps = savedInstanceState?.getParcelableArrayList<AppModel>(KEY_APPS)
     storedLoadedApps = restoredApps?.toMutableList() ?: mutableListOf()
@@ -200,6 +205,30 @@ class ArcticRequest constructor(
     return this
   }
 
+  fun performSend(callback: SentAndErrorCallback = null) {
+    onSending?.invoke()
+    disposables += Observable.just(true)
+        .map { selectedApps }
+        .flatMap { selectedApps ->
+          sendInteractor.send(selectedApps, this@ArcticRequest)
+              .map { selectedApps.size }
+        }
+        .observeToMainThread()
+        .subscribe(
+            {
+              "Request sent successfully!".log(TAG)
+              resetSelection()
+              onSent?.invoke(it)
+              callback?.invoke(it, null)
+            },
+            { processError(it, callback) }
+        )
+  }
+
+  fun dispose() {
+    disposables.dispose()
+  }
+
   private fun resetSelection() {
     for (i in storedLoadedApps.indices) {
       var app = storedLoadedApps[i]
@@ -245,30 +274,6 @@ class ArcticRequest constructor(
       onSendError?.invoke(error)
       callback?.invoke(0, error)
     } else throw RuntimeException(error)
-  }
-
-  fun performSend(callback: SentAndErrorCallback = null) {
-    onSending?.invoke()
-    disposables += Observable.just(true)
-        .map { selectedApps }
-        .flatMap { selectedApps ->
-          sendInteractor.send(selectedApps, this@ArcticRequest)
-              .map { selectedApps.size }
-        }
-        .observeToMainThread()
-        .subscribe(
-            {
-              "Request sent successfully!".log(TAG)
-              resetSelection()
-              onSent?.invoke(it)
-              callback?.invoke(it, null)
-            },
-            { processError(it, callback) }
-        )
-  }
-
-  fun dispose() {
-    disposables.dispose()
   }
 
   companion object {

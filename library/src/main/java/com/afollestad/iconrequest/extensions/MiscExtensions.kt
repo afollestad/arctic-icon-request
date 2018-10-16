@@ -1,3 +1,8 @@
+/*
+ * Licensed under Apache-2.0
+ *
+ * Designed and developed by Aidan Follestad (@afollestad)
+ */
 package com.afollestad.iconrequest.extensions
 
 import android.os.Build
@@ -6,12 +11,7 @@ import android.os.Build.VERSION_CODES
 import android.text.Html
 import android.text.Spanned
 import com.afollestad.iconrequest.AppModel
-import io.reactivex.Observable
 import java.util.Locale
-
-fun isNullOrEmpty(value: String?): Boolean {
-  return value == null || value.isEmpty()
-}
 
 internal val osVersionName: String
   get() {
@@ -52,9 +52,7 @@ internal fun String.drawableName(): String {
 internal fun List<AppModel>.transferStates(
   to: MutableList<AppModel>
 ) {
-  Observable.just(this)
-      .flatMapIterable { it }
-      .filter { it.selected }
+  this.filter { it.selected }
       .forEach {
         for (i in to.indices) {
           val current = to[i]
@@ -75,6 +73,4 @@ internal fun String.toHtml(): Spanned {
   }
 }
 
-internal fun <T> MutableList<T>.toArrayList(): java.util.ArrayList<T> {
-  return java.util.ArrayList(this)
-}
+internal fun <T> MutableList<T>.toArrayList() = java.util.ArrayList(this)

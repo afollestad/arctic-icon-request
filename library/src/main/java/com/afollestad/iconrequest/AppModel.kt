@@ -1,4 +1,9 @@
-package com.afollestad.iconrequest;
+/*
+ * Licensed under Apache-2.0
+ *
+ * Designed and developed by Aidan Follestad (@afollestad)
+ */
+package com.afollestad.iconrequest
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
@@ -33,7 +38,7 @@ data class AppModel(
 
   private fun getAppInfo(context: Context): ApplicationInfo? {
     return try {
-      context.packageManager.getApplicationInfo(pkg, 0);
+      context.packageManager.getApplicationInfo(pkg, 0)
     } catch (e: PackageManager.NameNotFoundException) {
       null
     }
@@ -54,7 +59,7 @@ data class AppModel(
         )
       val canvas = Canvas(bmp)
       drawable.setBounds(0, 0, canvas.width, canvas.height)
-      drawable.draw(canvas);
+      drawable.draw(canvas)
       os = ByteArrayOutputStream(bmp.byteCount)
       bmp.compress(Bitmap.CompressFormat.PNG, 100, os)
       return ByteArrayInputStream(os.toByteArray())

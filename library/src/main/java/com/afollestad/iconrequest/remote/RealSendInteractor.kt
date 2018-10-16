@@ -1,3 +1,8 @@
+/*
+ * Licensed under Apache-2.0
+ *
+ * Designed and developed by Aidan Follestad (@afollestad)
+ */
 package com.afollestad.iconrequest.remote
 
 import android.content.Context
@@ -49,19 +54,19 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
         TAG
     )
     if (selectedApps.isEmpty()) {
-      return@send Observable.error(Exception("No apps were selected to performSend."))
+      return Observable.error(Exception("No apps were selected to performSend."))
     } else if (isNullOrEmpty(
             config.emailRecipient
         ) && isNullOrEmpty(config.apiKey)
     ) {
-      return@send Observable.error(
+      return Observable.error(
           Exception("You must either specify a recipient email or a request manager API key.")
       )
     }
 
     val cacheFolder = config.actualCacheFolder(context)
     if (!cacheFolder.exists() && !cacheFolder.mkdirs()) {
-      return@send Observable.error(
+      return Observable.error(
           Exception("Unable to find or create cache folder: ${cacheFolder.absolutePath}")
       )
     }
@@ -89,9 +94,8 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
             TAG
         )
       } catch (e: Exception) {
-        return@send Observable.error(Exception("Failed to save an icon: " + e.message, e))
+        return Observable.error(Exception("Failed to save an icon: " + e.message, e))
       }
-
     }
 
     // Create appfilter
@@ -101,11 +105,11 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
     var jsonSb: StringBuilder? = null
     if (!isRemote) {
       xmlSb = StringBuilder(
-          "<resources>\n"
-              + "    <iconback img1=\"iconback\" />\n"
-              + "    <iconmask img1=\"iconmask\" />\n"
-              + "    <iconupon img1=\"iconupon\" />\n"
-              + "    <scale factor=\"1.0\" />"
+          "<resources>\n" +
+              "    <iconback img1=\"iconback\" />\n" +
+              "    <iconmask img1=\"iconmask\" />\n" +
+              "    <iconupon img1=\"iconupon\" />\n" +
+              "    <scale factor=\"1.0\" />"
       )
     } else {
       jsonSb = StringBuilder("{\n    \"components\": [")
@@ -118,9 +122,9 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
         xmlSb.append(name)
         xmlSb.append(" -->\n")
         xmlSb.append(
-            "    <item\n"
-                + "        component=\"ComponentInfo{${app.code}}\"\n"
-                + "        drawable=\"$drawableName\" />"
+            "    <item\n" +
+                "        component=\"ComponentInfo{${app.code}}\"\n" +
+                "        drawable=\"$drawableName\" />"
         )
       }
       if (jsonSb != null) {
@@ -148,11 +152,10 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
             TAG
         )
       } catch (e: Exception) {
-        return@send Observable.error(
+        return Observable.error(
             Exception("Failed to write your request appfilter.xml file: ${e.message}", e)
         )
       }
-
     }
     if (jsonSb != null) {
       jsonSb.append("\n    ]\n}")
@@ -166,16 +169,15 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
               TAG
           )
         } catch (e: Exception) {
-          return@send Observable.error(
+          return Observable.error(
               Exception("Failed to write your request appfilter.json file: ${e.message}", e)
           )
         }
-
       }
     }
 
     if (filesToZip.isEmpty()) {
-      return@send Observable.error(Exception("There are no PNG files to put into the ZIP archive."))
+      return Observable.error(Exception("There are no PNG files to put into the ZIP archive."))
     }
 
     // Zip everything into an archive
@@ -188,7 +190,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
           TAG
       )
     } catch (e: Exception) {
-      return@send Observable.error(
+      return Observable.error(
           Exception("Failed to create the request ZIP file: ${e.message}", e)
       )
     }
