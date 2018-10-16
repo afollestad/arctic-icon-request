@@ -20,7 +20,6 @@ import com.afollestad.iconrequest.UriTransformer
 import com.afollestad.iconrequest.extensions.dateFormat
 import com.afollestad.iconrequest.extensions.deleteRelevantChildren
 import com.afollestad.iconrequest.extensions.drawableName
-import com.afollestad.iconrequest.extensions.isNullOrEmpty
 import com.afollestad.iconrequest.extensions.log
 import com.afollestad.iconrequest.extensions.osVersionName
 import com.afollestad.iconrequest.extensions.toBitmap
@@ -55,10 +54,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
     )
     if (selectedApps.isEmpty()) {
       return Observable.error(Exception("No apps were selected to performSend."))
-    } else if (isNullOrEmpty(
-            config.emailRecipient
-        ) && isNullOrEmpty(config.apiKey)
-    ) {
+    } else if (config.emailRecipient.isNullOrEmpty() && config.apiKey.isNullOrEmpty()) {
       return Observable.error(
           Exception("You must either specify a recipient email or a request manager API key.")
       )
@@ -72,7 +68,7 @@ internal class RealSendInteractor(private val context: Context) : SendInteractor
     }
 
     val filesToZip = mutableListOf<File>()
-    val isRemote = !isNullOrEmpty(config.apiKey)
+    val isRemote = !config.apiKey.isNullOrEmpty()
 
     // Save app icons
     "Saving icons...".log(TAG)

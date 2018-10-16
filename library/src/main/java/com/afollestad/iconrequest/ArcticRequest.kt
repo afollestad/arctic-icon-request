@@ -8,7 +8,6 @@
 package com.afollestad.iconrequest
 
 import android.content.Context
-import android.net.Uri
 import android.os.Bundle
 import com.afollestad.iconrequest.extensions.log
 import com.afollestad.iconrequest.extensions.observeToMainThread
@@ -23,15 +22,6 @@ import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import retrofit2.HttpException
 import java.util.HashSet
-
-typealias UriTransformer = ((Uri) -> (Uri))?
-typealias ErrorCallback = ((Throwable) -> (Unit))?
-typealias VoidCallback = (() -> (Unit))?
-typealias LoadedCallback = ((List<AppModel>) -> (Unit))?
-typealias SentCallback = ((Int) -> (Unit))?
-typealias AppCallback = ((AppModel) -> (Unit))?
-typealias LoadedAndErrorCallback = ((List<AppModel>, Throwable?) -> (Unit))?
-typealias SentAndErrorCallback = ((Int, Throwable?) -> (Unit))?
 
 /** @author Aidan Follestad (afollestad) */
 class ArcticRequest constructor(

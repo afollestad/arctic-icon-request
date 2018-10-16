@@ -8,7 +8,6 @@ package com.afollestad.iconrequest.loaders
 import android.content.Context
 import com.afollestad.iconrequest.AppFilterSource
 import com.afollestad.iconrequest.extensions.closeQuietly
-import com.afollestad.iconrequest.extensions.isNullOrEmpty
 import com.afollestad.iconrequest.extensions.log
 import io.reactivex.Observable
 import java.io.BufferedReader
@@ -112,7 +111,7 @@ internal class RealAppFilterSource(private val context: Context) : AppFilterSour
         "Found: $component ($drawable)".log(
             TAG
         )
-        if (isNullOrEmpty(drawable)) {
+        if (drawable.isNullOrEmpty()) {
           "WARNING: Drawable shouldn't be null.".log(
               TAG
           )
