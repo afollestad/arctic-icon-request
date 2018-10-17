@@ -18,7 +18,7 @@ import com.afollestad.iconrequest.loaders.RealAppFilterSource
 import com.afollestad.iconrequest.loaders.RealComponentInfoSource
 import com.afollestad.iconrequest.remote.ApiResponse
 import com.afollestad.iconrequest.remote.RealSendInteractor
-import io.reactivex.Observable
+import io.reactivex.Observable.just
 import io.reactivex.disposables.CompositeDisposable
 import retrofit2.HttpException
 import java.util.HashSet
@@ -86,7 +86,7 @@ class ArcticRequest constructor(
 
   fun performLoad(callback: LoadedAndErrorCallback = null) {
     onLoading?.invoke()
-    disposables += Observable.just(true)
+    disposables += just(true)
         .flatMap {
           appFilterSource.load(config.appFilterName, config.errorOnInvalidDrawables)
         }
@@ -191,7 +191,7 @@ class ArcticRequest constructor(
 
   fun performSend(callback: SentAndErrorCallback = null) {
     onSending?.invoke()
-    disposables += Observable.just(true)
+    disposables += just(true)
         .map { selectedApps }
         .flatMap { selectedApps ->
           sendInteractor.send(selectedApps, this@ArcticRequest)

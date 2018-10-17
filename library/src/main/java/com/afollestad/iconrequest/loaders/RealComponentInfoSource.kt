@@ -18,6 +18,10 @@ import java.util.HashSet
 /** @author Aidan Follestad (afollestad) */
 internal class RealComponentInfoSource(private val context: Context) : ComponentInfoSource {
 
+  companion object {
+    private const val TAG = "RealComponentInfoSource"
+  }
+
   override fun getInstalledApps(filter: HashSet<String>): MutableList<AppModel> {
     val pm = context.packageManager
     val appInfos = pm.getInstalledApplications(PackageManager.GET_META_DATA)
@@ -25,7 +29,7 @@ internal class RealComponentInfoSource(private val context: Context) : Component
     try {
       Collections.sort(
           appInfos,
-          NameComparator(pm)
+          AppInfoComparator(pm)
       )
     } catch (t: Throwable) {
       t.printStackTrace()
@@ -65,7 +69,7 @@ internal class RealComponentInfoSource(private val context: Context) : Component
     return apps
   }
 
-  private class NameComparator internal constructor(private val packageManager: PackageManager) :
+  private class AppInfoComparator internal constructor(private val packageManager: PackageManager) :
       Comparator<ApplicationInfo> {
 
     override fun compare(
@@ -78,9 +82,5 @@ internal class RealComponentInfoSource(private val context: Context) : Component
       return sa.toString()
           .compareTo(sb.toString())
     }
-  }
-
-  companion object {
-    private const val TAG = "RealComponentInfoSource"
   }
 }
