@@ -10,20 +10,21 @@ import android.content.pm.PackageManager
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.content.FileProvider
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.GridLayoutManager
-import android.support.v7.widget.Toolbar
 import android.view.MenuItem
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.GridLayoutManager
 import com.afollestad.iconrequest.ArcticConfig
 import com.afollestad.iconrequest.ArcticRequest
 import com.afollestad.iconrequest.UriTransformer
+import com.afollestad.iconrequestsample.R.integer
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.fab
 import kotlinx.android.synthetic.main.activity_main.list
 import kotlinx.android.synthetic.main.activity_main.progress
@@ -78,7 +79,7 @@ class MainActivity : AppCompatActivity(), Toolbar.OnMenuItemClickListener {
     adapter = MainAdapter()
     adapter.setListener { _, app -> request.toggleSelection(app) }
 
-    val lm = GridLayoutManager(this, resources.getInteger(R.integer.grid_width))
+    val lm = GridLayoutManager(this, resources.getInteger(integer.grid_width))
     list.layoutManager = lm
     list.adapter = adapter
 

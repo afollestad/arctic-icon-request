@@ -3,6 +3,8 @@
  *
  * Designed and developed by Aidan Follestad (@afollestad)
  */
+@file:Suppress("unused")
+
 package com.afollestad.iconrequestsample
 
 import android.content.Context
