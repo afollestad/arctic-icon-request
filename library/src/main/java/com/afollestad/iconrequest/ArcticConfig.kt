@@ -23,7 +23,7 @@ data class ArcticConfig(
   val apiHost: String? = null,
   val apiKey: String? = null
 ) : Serializable {
-  fun actualCacheFolder(context: Context): File {
+  internal fun actualCacheFolder(context: Context): File {
     return cacheFolder?.wipe() ?: File(context.externalCacheDir, "com.afollestad.arctic").wipe()
   }
 }

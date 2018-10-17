@@ -38,6 +38,12 @@ class ArcticRequest constructor(
   private val onSelectionChange: AppCallback = null
 ) {
 
+  companion object {
+    private const val TAG = "ArcticRequest"
+    private const val KEY_FILTER = "ir.loadedFilter"
+    private const val KEY_APPS = "ir.storedLoadedApps"
+  }
+
   private val appFilterSource: AppFilterSource
   private val componentInfoSource: ComponentInfoSource
   private val sendInteractor: SendInteractor
@@ -60,6 +66,7 @@ class ArcticRequest constructor(
     this.componentInfoSource = RealComponentInfoSource(context)
     this.sendInteractor = RealSendInteractor(context)
 
+    @Suppress("UNCHECKED_CAST")
     this.loadedFilter = savedInstanceState?.getSerializable(KEY_FILTER) as? HashSet<String>
         ?: HashSet(0)
 
@@ -109,10 +116,8 @@ class ArcticRequest constructor(
 
   fun isSelected(app: AppModel): Boolean {
     val index = storedLoadedApps.indexOfFirst { it.code == app.code }
-    if (index == -1) {
-      throw IllegalArgumentException(
-          "Unable to find app ${app.pkg} in this list of loaded apps!"
-      )
+    check(index != -1) {
+      "Unable to find app ${app.pkg} in this list of loaded apps!"
     }
     return storedLoadedApps[index].selected
   }
@@ -120,15 +125,15 @@ class ArcticRequest constructor(
   fun select(appToSelect: AppModel): ArcticRequest {
     var app = appToSelect
     val index = storedLoadedApps.indexOfFirst { it.code == app.code }
-    if (index == -1) {
-      throw IllegalArgumentException(
-          "Unable to find app ${app.pkg} in this list of loaded apps!"
-      )
+    check(index != -1) {
+      "Unable to find app ${app.pkg} in this list of loaded apps!"
     }
+
     app = storedLoadedApps[index]
     if (app.selected) {
       return this
     }
+
     app = app.copy(selected = true)
     storedLoadedApps[index] = app
     onSelectionChange?.invoke(app)
@@ -138,15 +143,15 @@ class ArcticRequest constructor(
   fun deselect(appToDeselect: AppModel): ArcticRequest {
     var app = appToDeselect
     val index = storedLoadedApps.indexOfFirst { it.code == app.code }
-    if (index == -1) {
-      throw IllegalArgumentException(
-          "Unable to find app ${app.pkg} in this list of loaded apps!"
-      )
+    check(index != -1) {
+      "Unable to find app ${app.pkg} in this list of loaded apps!"
     }
+
     app = storedLoadedApps[index]
     if (!app.selected) {
       return this
     }
+
     app = app.copy(selected = false)
     storedLoadedApps[index] = app
     onSelectionChange?.invoke(app)
@@ -156,11 +161,10 @@ class ArcticRequest constructor(
   fun toggleSelection(appToToggle: AppModel): ArcticRequest {
     var app = appToToggle
     val index = storedLoadedApps.indexOfFirst { it.code == app.code }
-    if (index == -1) {
-      throw IllegalArgumentException(
-          "Unable to find app ${app.pkg} in this list of loaded apps!"
-      )
+    check(index != -1) {
+      "Unable to find app ${app.pkg} in this list of loaded apps!"
     }
+
     app = storedLoadedApps[index]
     // Toggle selection state
     app = app.copy(selected = !app.selected)
@@ -170,26 +174,16 @@ class ArcticRequest constructor(
   }
 
   fun selectAll(): ArcticRequest {
-    for (i in storedLoadedApps.indices) {
-      var app = storedLoadedApps[i]
-      if (app.selected) {
-        continue
-      }
-      app = app.copy(selected = true)
-      storedLoadedApps[i] = app
+    for ((i, app) in storedLoadedApps.withIndex()) {
+      storedLoadedApps[i] = app.copy(selected = true)
     }
     onLoaded?.invoke(storedLoadedApps)
     return this
   }
 
   fun deselectAll(): ArcticRequest {
-    for (i in storedLoadedApps.indices) {
-      var app = storedLoadedApps[i]
-      if (!app.selected) {
-        continue
-      }
-      app = app.copy(selected = false)
-      storedLoadedApps[i] = app
+    for ((i, app) in storedLoadedApps.withIndex()) {
+      storedLoadedApps[i] = app.copy(selected = false)
     }
     onLoaded?.invoke(storedLoadedApps)
     return this
@@ -215,18 +209,13 @@ class ArcticRequest constructor(
         )
   }
 
-  fun dispose() {
-    disposables.dispose()
-  }
+  fun dispose() = disposables.dispose()
 
   private fun resetSelection() {
-    for (i in storedLoadedApps.indices) {
-      var app = storedLoadedApps[i]
-      if (!app.selected) {
-        continue
-      }
-      app = app.copy(selected = false, requested = true)
-      storedLoadedApps[i] = app
+    val seq = storedLoadedApps.asSequence()
+        .filter { it.selected }
+    for ((i, app) in seq.withIndex().toList()) {
+      storedLoadedApps[i] = app.copy(selected = false, requested = true)
     }
     onLoaded?.invoke(storedLoadedApps)
   }
@@ -236,7 +225,6 @@ class ArcticRequest constructor(
     callback: SentAndErrorCallback
   ) {
     if (error is HttpException) {
-
       val errorBody = error.response().errorBody()!!.string()
       if (errorBody.isEmpty()) {
         val errorEx = IllegalStateException("HTTP Status ${error.response().code()}")
@@ -264,11 +252,5 @@ class ArcticRequest constructor(
       onSendError?.invoke(error)
       callback?.invoke(0, error)
     } else throw RuntimeException(error)
-  }
-
-  companion object {
-    private const val TAG = "ArcticRequest"
-    private const val KEY_FILTER = "ir.loadedFilter"
-    private const val KEY_APPS = "ir.storedLoadedApps"
   }
 }
